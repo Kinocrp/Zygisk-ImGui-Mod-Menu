@@ -7,6 +7,7 @@
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
+#include <algorithm>
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_impl_opengl3.h"
@@ -73,7 +74,11 @@ void SetupImGui() {
     ImGuiStyle& style = ImGui::GetStyle();
     ImVec4* colors = style.Colors;
     io.DisplaySize = ImVec2((float) g_width, (float) g_height);
-    scale = io.DisplaySize.x / 1080.0f;
+
+    const float base_menu_size = 300.0f;
+    float min_dim = std::min(g_width, g_height);
+    float scale = min_dim / (base_menu_size * 1.5f);
+
     ImGui_ImplOpenGL3_Init("#version 100");
     io.Fonts->AddFontDefault();
     SetUpColors(style, colors);
