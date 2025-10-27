@@ -1,0 +1,9 @@
+ext {
+    moduleLibraryName = "zygisk-mod-menu"
+    magiskModuleId = "zygisk-mod-menu"
+    moduleName = "Zygisk Mod Menu"
+    moduleAuthor = "Kinocrp"
+    moduleDescription = "Zygisk Mod Menu For Unity Games. Support ESP!"
+    moduleVersion = "v1.0.0"
+    moduleVersionCode = 1
+}
