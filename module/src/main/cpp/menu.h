@@ -75,9 +75,8 @@ void SetupImGui() {
     ImVec4* colors = style.Colors;
     io.DisplaySize = ImVec2((float) g_width, (float) g_height);
 
-    const float base_menu_size = 300.0f;
     float min_dim = std::min(g_width, g_height);
-    float scale = min_dim / (base_menu_size * 1.5f);
+    float scale = min_dim / (300.0f * 1.5f);
 
     ImGui_ImplOpenGL3_Init("#version 100");
     io.Fonts->AddFontDefault();
