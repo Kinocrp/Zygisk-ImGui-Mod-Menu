@@ -62,7 +62,7 @@ void SetUpColors(ImGuiStyle& style, ImVec4* colors) {
     style.GrabRounding = 2.3f;
     style.TabRounding = 2.3f;
 
-    //style.WindowMinSize = { 600,300 };
+    style.WindowMinSize = { 300 * scale,300 * scale };
     style.ChildRounding = 5.0f;
 }
 
@@ -145,6 +145,10 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     }
     ImGuiIO &io = ImGui::GetIO();
     ImGui_ImplOpenGL3_NewFrame();
+
+    io.MousePos = ImVec2(g_last_touch.x, g_last_touch.y);
+    io.MouseDown[0] = g_last_touch.down;
+
     ImGui::NewFrame();
 
     DrawESP();

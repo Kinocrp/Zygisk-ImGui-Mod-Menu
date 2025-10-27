@@ -6,7 +6,6 @@
 #define ZYGISK_MOD_MENU_ESP_H
 
 #include "imgui_internal.h"
-#include "font.h"
 
 namespace ESP {
     void DrawLine(ImVec2 start, ImVec2 end, ImVec4 color, float size) {

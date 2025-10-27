@@ -4,6 +4,8 @@
 
 #include "globals.h"
 
+TouchEvent g_last_touch;
+
 // Global Value
 
 bool IsESP = false;

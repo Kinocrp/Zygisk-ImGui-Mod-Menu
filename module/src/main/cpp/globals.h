@@ -7,6 +7,16 @@
 
 #pragma once
 
+#include "imgui.h"
+
+struct TouchEvent {
+    float x = 0.0f;
+    float y = 0.0f;
+    bool down = false;
+};
+
+extern TouchEvent g_last_touch;
+
 // Global Value
 
 extern bool IsESP;

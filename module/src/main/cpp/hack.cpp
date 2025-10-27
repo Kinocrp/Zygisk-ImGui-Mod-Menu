@@ -8,6 +8,7 @@
 #include "log.h"
 #include "xdl.h"
 #include "menu.h"
+#include "globals.h"
 #include <cstring>
 #include <cstdio>
 #include <unistd.h>
@@ -17,12 +18,21 @@
 #include <thread>
 #include <sys/mman.h>
 #include <linux/unistd.h>
+#include <android/input.h>
 #include <array>
 
 HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac) {
     origInput(thiz, ex_ab, ex_ac);
-    ImGui_ImplAndroid_HandleInputEvent((AInputEvent *)thiz);
-    return;
+    if (!thiz) return;
+
+    AInputEvent* event = (AInputEvent*)thiz;
+    if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
+        int action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
+        g_last_touch.x = AMotionEvent_getX(event,0);
+        g_last_touch.y = AMotionEvent_getY(event,0);
+        g_last_touch.down = (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
+        if (action == AMOTION_EVENT_ACTION_UP) g_last_touch.down = false;
+    }
 }
 
 void hack_start(const char *game_data_dir) {
