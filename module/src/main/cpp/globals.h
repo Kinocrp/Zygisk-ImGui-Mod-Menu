@@ -13,6 +13,8 @@ struct TouchEvent {
     float x = 0.0f;
     float y = 0.0f;
     bool down = false;
+    bool clicked = false;
+    bool released = false;
 };
 
 extern TouchEvent g_last_touch;

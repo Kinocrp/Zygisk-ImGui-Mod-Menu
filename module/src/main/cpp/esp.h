@@ -42,10 +42,7 @@ namespace ESP {
         auto drawList = ImGui::GetBackgroundDrawList();
         if (!drawList) return;
 
-        // Calculate text size using the given font and size
         ImVec2 textSize = fontStyle->CalcTextSizeA(size, FLT_MAX, 0.0f, text);
-
-        // Adjust position to center (both X and Y)
         ImVec2 centeredPos = ImVec2(
                 position.x - textSize.x * 0.5f,
                 position.y - textSize.y * 0.5f

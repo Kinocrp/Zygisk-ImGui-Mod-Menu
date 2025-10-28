@@ -28,10 +28,34 @@ HOOKAF(void, Input, void *thiz, void *ex_ab, void *ex_ac) {
     AInputEvent* event = (AInputEvent*)thiz;
     if (AInputEvent_getType(event) == AINPUT_EVENT_TYPE_MOTION) {
         int action = AMotionEvent_getAction(event) & AMOTION_EVENT_ACTION_MASK;
-        g_last_touch.x = AMotionEvent_getX(event,0);
-        g_last_touch.y = AMotionEvent_getY(event,0);
-        g_last_touch.down = (action == AMOTION_EVENT_ACTION_DOWN || action == AMOTION_EVENT_ACTION_MOVE);
-        if (action == AMOTION_EVENT_ACTION_UP) g_last_touch.down = false;
+        float x = AMotionEvent_getX(event, 0);
+        float y = AMotionEvent_getY(event, 0);
+
+        switch (action) {
+            case AMOTION_EVENT_ACTION_DOWN:
+                g_last_touch.x = x;
+                g_last_touch.y = y;
+                g_last_touch.down = true;
+                g_last_touch.clicked = true;
+                g_last_touch.released = false;
+                break;
+
+            case AMOTION_EVENT_ACTION_MOVE:
+                g_last_touch.x = x;
+                g_last_touch.y = y;
+                g_last_touch.down = true;
+                g_last_touch.clicked = false;
+                g_last_touch.released = false;
+                break;
+
+            case AMOTION_EVENT_ACTION_UP:
+                g_last_touch.x = x;
+                g_last_touch.y = y;
+                g_last_touch.down = false;
+                g_last_touch.clicked = false;
+                g_last_touch.released = true;
+                break;
+        }
     }
 }
 

@@ -20,7 +20,7 @@
 
 int g_width = 0;
 int g_height = 0;
-bool g_imgui_initialized = false;
+bool g_imgui_initialized;
 
 float scale = 1;
 float baseFontSize = 14.0f;
@@ -57,13 +57,11 @@ void SetUpColors(ImGuiStyle& style, ImVec4* colors) {
 
     colors[ImGuiCol_Border] = Transparented;
 
-    style.WindowRounding = 10.0f;
+    style.WindowRounding = 20.0f;
     style.FrameRounding = 5.0f;
     style.ScrollbarRounding = 5.0f;
     style.GrabRounding = 2.3f;
     style.TabRounding = 2.3f;
-
-    style.WindowMinSize = { 300 * scale,300 * scale };
     style.ChildRounding = 5.0f;
 }
 
@@ -113,7 +111,7 @@ void SetupImGui() {
     style.ItemInnerSpacing = ImVec2(4 * scale, 4 * scale);
     style.TouchExtraPadding = ImVec2(4 * scale, 4 * scale);
 
-    style.WindowMinSize = { 300 * scale,300 * scale };
+    style.WindowMinSize = { 300 * scale, 300 * scale };
     style.ScrollbarSize = 16 * scale;
     style.GrabMinSize   = 16 * scale;
 }
@@ -125,17 +123,33 @@ void DrawESP() {
 }
 
 void DrawMenu() {
-    ESP::DrawLine(ImVec2(g_width/2 - 100, g_height), ImVec2(g_width/2 + 100, g_height), ImVec4(0, 0, 0, 255), 50);
-    ESP::DrawCircle(g_width/2 - 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
-    ESP::DrawCircle(g_width/2 + 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
-    ESP::DrawText(ImVec2(g_width/2, g_height - 12), ImVec4(255, 255, 255, 255), "Powered By Zygisk", regular, 20.0f);
+    ImGuiIO& io = ImGui::GetIO();
+    static bool showMenu = false;
 
-    // Mod Menu
-    ImGui::Begin("Modded By Kinocrp", nullptr, ImGuiWindowFlags_NoResize);
+    if (g_last_touch.released) {
+        ImVec2 mousePos = ImVec2(g_last_touch.x, g_last_touch.y);
+        ImVec2 rectMin = ImVec2(g_width / 2 - 125, g_height - 50);
+        ImVec2 rectMax = ImVec2(g_width / 2 + 125, g_height + 50);
 
-    ImGui::Text("Basic Features");
-    ImGui::Checkbox("ESP", &IsESP);
-    ImGui::End(); // Render end
+        if (mousePos.x >= rectMin.x && mousePos.x <= rectMax.x && mousePos.y >= rectMin.y && mousePos.y <= rectMax.y) {
+            showMenu = !showMenu;
+        }
+        g_last_touch.released = false;
+    }
+
+    if (showMenu) {
+        // Mod Menu
+        ImGui::Begin("Modded By Kinocrp", &showMenu, ImGuiWindowFlags_NoResize);
+
+        ImGui::Text("Basic Features");
+        ImGui::Checkbox("ESP", &IsESP);
+        ImGui::End(); // Render end
+    }
+
+    ESP::DrawLine(ImVec2(g_width / 2 - 100, g_height), ImVec2(g_width / 2 + 100, g_height), ImVec4(0, 0, 0, 255), 50);
+    ESP::DrawCircle(g_width / 2 - 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
+    ESP::DrawCircle(g_width / 2 + 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
+    ESP::DrawText(ImVec2(g_width / 2, g_height - 12), ImVec4(255, 255, 255, 255), "Powered By Zygisk", regular, 20.0f);
 }
 
 EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
@@ -152,7 +166,6 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 
     io.MousePos = ImVec2(g_last_touch.x, g_last_touch.y);
     io.MouseDown[0] = g_last_touch.down;
-
     ImGui::NewFrame();
 
     DrawESP();
