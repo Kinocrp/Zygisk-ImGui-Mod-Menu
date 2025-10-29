@@ -22,7 +22,7 @@ int g_width = 0;
 int g_height = 0;
 bool g_imgui_initialized;
 
-float scale = 1;
+float scale = 1.0f;
 float baseFontSize = 14.0f;
 float iconFontSize = baseFontSize * 2.0f / 3.0f;
 
@@ -39,17 +39,17 @@ void SetUpColors(ImGuiStyle& style, ImVec4* colors) {
     colors[ImGuiCol_ChildBg] = ImColor(24, 28, 30);
     colors[ImGuiCol_Text] = ImColor(255, 255, 255);
 
-    //Header
+    // Header
     colors[ImGuiCol_Header] = ImColor(30, 138, 200);
     colors[ImGuiCol_HeaderHovered] = hovered;
     colors[ImGuiCol_HeaderActive] = ImColor(30, 116, 215);
 
-    //buttons
+    // Buttons
     colors[ImGuiCol_Button] = ImColor(25, 145, 215);
     colors[ImGuiCol_ButtonHovered] = hovered;
     colors[ImGuiCol_ButtonActive] = ImColor(100, 161, 222);
 
-    //checkboxes
+    // Checkboxes
     colors[ImGuiCol_CheckMark] = ImColor(0, 0, 0);
     colors[ImGuiCol_FrameBg] = ImColor(25, 158, 215, 200);
     colors[ImGuiCol_FrameBgActive] = ImColor(25, 164, 215);
@@ -90,7 +90,7 @@ void SetupImGui() {
                     0x0400, 0x052F, // Cyrillic + Cyrillic Supplement
                     0x2DE0, 0x2DFF, // Cyrillic Extended-A
                     0xA640, 0xA69F, // Cyrillic Extended-B
-                    0xE000, 0xE226, // icons
+                    0xE000, 0xE226, // Icons
                     0
             };
     ImFontConfig icontfont_config;
@@ -118,11 +118,16 @@ void SetupImGui() {
 
 void DrawESP() {
     if (!IsESP) return;
-    // ESP
-
+    // ESP Example
+    for (auto& obj : g_ESPObjects) {
+        LOGI("%s [%0.2f, %0.2f]", obj.name.c_str(), obj.x, obj.y);
+        ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), obj.name.c_str(), regular, 50.0f);
+        ESP::DrawRect(ImVec4(obj.x - 50, obj.y - 50, 100, 100), ImVec4(255, 0, 0, 255), 5);
+    }
 }
 
 void DrawMenu() {
+    // Click On Zygisk Watermark To Open Menu
     ImGuiIO& io = ImGui::GetIO();
     static bool showMenu = false;
 
@@ -139,6 +144,7 @@ void DrawMenu() {
 
     if (showMenu) {
         // Mod Menu
+        ImGui::SetNextWindowSizeConstraints(ImVec2(300 * scale, 300 * scale), ImVec2(300 * scale, 300 * scale));
         ImGui::Begin("Modded By Kinocrp", &showMenu, ImGuiWindowFlags_NoResize);
 
         ImGui::Text("Basic Features");
@@ -146,6 +152,7 @@ void DrawMenu() {
         ImGui::End(); // Render end
     }
 
+    // Zygisk Watermark
     ESP::DrawLine(ImVec2(g_width / 2 - 100, g_height), ImVec2(g_width / 2 + 100, g_height), ImVec4(0, 0, 0, 255), 50);
     ESP::DrawCircle(g_width / 2 - 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
     ESP::DrawCircle(g_width / 2 + 100, g_height, 25, true, ImVec4(0, 0, 0, 255));

@@ -472,10 +472,22 @@ const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodNa
     return nullptr;
 }
 
-// DobbyHook
+// Example Usage
+std::string (*original_get_productName)() = nullptr;
+std::string replace_get_productName() {
+    std::string ret = original_get_productName();
+    LOGI("%s", ret.c_str());
+    return ret;
+}
 
 // Hook
 void il2cpp_hook() {
+    // Example
     Il2CppDomain* domain = il2cpp_domain_get();
-    Il2CppImage* Assembly_CSharp = getImage(domain, "Assembly-CSharp.dll");
+    Il2CppImage* UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");
+
+    Il2CppClass* Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
+    DobbyHook((void *)(il2cpp_class_get_method_from_name(Application, "get_productName",0)->methodPointer),
+              (void*)replace_get_productName,
+              (void**)&original_get_productName);
 }
