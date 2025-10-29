@@ -20,7 +20,7 @@
 
 int g_width = 0;
 int g_height = 0;
-bool g_imgui_initialized;
+bool g_imgui_initialized = false;
 
 float scale = 1.0f;
 float baseFontSize = 14.0f;
