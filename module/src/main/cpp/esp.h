@@ -17,9 +17,9 @@ namespace ESP {
 
     void DrawRect(ImVec4 rect, ImVec4 color, float size) {
         ImVec2 p1(rect.x, rect.y);
-        ImVec2 p2(rect.x + rect.w, rect.y);
-        ImVec2 p3(rect.x + rect.w, rect.y + rect.z);
-        ImVec2 p4(rect.x, rect.y + rect.z);
+        ImVec2 p2(rect.x + rect.z, rect.y);
+        ImVec2 p3(rect.x + rect.z, rect.y + rect.w);
+        ImVec2 p4(rect.x, rect.y + rect.w);
 
         DrawLine(p1, p2, color, size);
         DrawLine(p2, p3, color, size);
