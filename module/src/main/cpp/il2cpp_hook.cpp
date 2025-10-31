@@ -12,6 +12,8 @@
 #include <sstream>
 #include <fstream>
 #include <unistd.h>
+#include <thread>
+#include <chrono>
 #include "xdl.h"
 #include "log.h"
 #include "il2cpp-tabledefs.h"
@@ -472,6 +474,36 @@ const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodNa
     return nullptr;
 }
 
+// ESP
+void ESPRuntime() {
+    struct VInt3 { int x; int y; int z; };
+    struct Vector3Value { float x; float y; float z; };
+
+    VInt3 worldLocVInt;
+    Vector3Value worldPosVec;
+    Vector3Value screenPosVec;
+
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(int(1000 / ESP_FPS)));
+        if (!IsESP) continue;
+        for (auto& obj : g_ESPObjects) {
+            Il2CppObject* enemyObj = (Il2CppObject*)obj.espObj;
+            Il2CppObject* cameraObj = (Il2CppObject*)mainCamera;
+
+            // The Way To Get ScreenPoint
+            // il2cpp_field_get_value(Il2CppObject*, FieldInfo*, &worldLocVInt);          // If Field Type Is VInt3
+            // il2cpp_field_get_value(Il2CppObject*, FieldInfo*, &worldPosVec);           // If Field Type Is Vector3
+            // worldPosVec = worldLocVInt / 1000.0f;                                      // Convert VInt3 To Vector3 (Divide By 1000 If needed, It's 1000 Normally)
+            // (Il2CppObject*)screenPointObj = WorldToScreenPoint(worldPosVec);           // Call UnityEngine.Camera::WorldToScreenPoint(cameraObj, worldPosVec)
+            // il2cpp_field_get_value(screenPointObj, FieldInfo*, &screenPosVec.x);       // Read screen X coordinate
+            // il2cpp_field_get_value(screenPointObj, FieldInfo*, &screenPosVec.y);       // Read screen Y coordinate
+            // il2cpp_field_get_value(screenPointObj, FieldInfo*, &screenPosVec.z);       // Read screen Z coordinate (Depth)
+            // obj->x = screenPosVec.x                                                    // Set New screen X coordinate
+            // obj->y = g_height - screenPosVec.y                                         // Set New screen Y coordinate
+        }
+    }
+}
+
 // Example Usage
 std::string (*original_get_productName)() = nullptr;
 std::string replace_get_productName() {
@@ -482,6 +514,7 @@ std::string replace_get_productName() {
 
 // Hook
 void il2cpp_hook() {
+    ESPThread = std::thread(ESPRuntime);
     // Example
     Il2CppDomain* domain = il2cpp_domain_get();
     Il2CppImage* UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");

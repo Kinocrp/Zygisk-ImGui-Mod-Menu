@@ -10,6 +10,7 @@
 #include "imgui.h"
 #include <string>
 #include <vector>
+#include <thread>
 
 struct TouchEvent {
     float x = 0.0f;
@@ -20,13 +21,23 @@ struct TouchEvent {
 };
 extern TouchEvent g_last_touch;
 
-// ESP Struct
+// Menu
 
+extern int g_width;
+extern int g_height;
+extern bool g_imgui_initialized;
+
+// ESP
+
+std::thread ESPThread;
 struct ESPObject {
-    std::string name;
+    void* espObj;
+    int objID;
     float x, y;
 };
 extern std::vector<ESPObject> g_ESPObjects;
+extern float ESP_FPS;
+extern void* mainCamera;
 
 // Global Value
 

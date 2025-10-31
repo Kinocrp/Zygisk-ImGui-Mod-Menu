@@ -18,10 +18,6 @@
 #include "globals.h"
 #include "esp.h"
 
-int g_width = 0;
-int g_height = 0;
-bool g_imgui_initialized = false;
-
 float scale = 1.0f;
 float baseFontSize = 14.0f;
 float iconFontSize = baseFontSize * 2.0f / 3.0f;
@@ -120,8 +116,8 @@ void DrawESP() {
     if (!IsESP) return;
     // ESP Example
     for (auto& obj : g_ESPObjects) {
-        LOGI("%s [%0.2f, %0.2f]", obj.name.c_str(), obj.x, obj.y);
-        ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), obj.name.c_str(), regular, 50.0f);
+        LOGI("%d [%0.2f, %0.2f]", obj.objID, obj.x, obj.y);
+        ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), std::to_string(obj.objID).c_str(), regular, 50.0f);
         ESP::DrawRect(ImVec4(obj.x - 50, obj.y - 50, 100, 100), ImVec4(255, 0, 0, 255), 5);
     }
 }
@@ -166,6 +162,7 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     if (!g_imgui_initialized)
     {
         SetupImGui();
+        eglSwapInterval(dpy, 1); // vsync
         g_imgui_initialized = true;
     }
     ImGuiIO &io = ImGui::GetIO();
