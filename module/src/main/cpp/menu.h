@@ -2,8 +2,8 @@
 // Created by Mono on 2024/12/30.
 //
 
-#ifndef ZYGISK_MOD_MENU_MENU_H
-#define ZYGISK_MOD_MENU_MENU_H
+#ifndef ZYGISK_IMGUI_MOD_MENU_MENU_H
+#define ZYGISK_IMGUI_MOD_MENU_MENU_H
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -16,7 +16,7 @@
 #include "font.h"
 #include "il2cpp_hook.h"
 #include "globals.h"
-#include "esp.h"
+#include "esp-draw.h"
 
 float scale = 1.0f;
 float baseFontSize = 14.0f;
@@ -112,10 +112,10 @@ void SetupImGui() {
     style.GrabMinSize   = 16 * scale;
 }
 
-void DrawESP() {
-    if (!IsESP) return;
+void DrawESP(ESPManager& manager, bool& ESP) {
+    if (!ESP) return;
     // ESP Example
-    for (auto& obj : g_ESPObjects) {
+    for (auto& obj : manager.get_ESPObjects()) {
         LOGI("%d [%0.2f, %0.2f]", obj.objID, obj.x, obj.y);
         ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), std::to_string(obj.objID).c_str(), regular, 50.0f);
         ESP::DrawRect(ImVec4(obj.x - 50, obj.y - 50, 100, 100), ImVec4(255, 0, 0, 255), 5);
@@ -132,9 +132,7 @@ void DrawMenu() {
         ImVec2 rectMin = ImVec2(g_width / 2 - 125, g_height - 50);
         ImVec2 rectMax = ImVec2(g_width / 2 + 125, g_height + 50);
 
-        if (mousePos.x >= rectMin.x && mousePos.x <= rectMax.x && mousePos.y >= rectMin.y && mousePos.y <= rectMax.y) {
-            showMenu = !showMenu;
-        }
+        if (mousePos.x >= rectMin.x && mousePos.x <= rectMax.x && mousePos.y >= rectMin.y && mousePos.y <= rectMax.y) showMenu = !showMenu;
         g_last_touch.released = false;
     }
 
@@ -153,6 +151,9 @@ void DrawMenu() {
     ESP::DrawCircle(g_width / 2 - 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
     ESP::DrawCircle(g_width / 2 + 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
     ESP::DrawText(ImVec2(g_width / 2, g_height - 12), ImVec4(255, 255, 255, 255), "Powered By Zygisk", regular, 20.0f);
+
+    // DrawESP
+    DrawESP(std::ref(g_ESPManager), std::ref(IsESP));
 }
 
 EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
@@ -172,7 +173,6 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     io.MouseDown[0] = g_last_touch.down;
     ImGui::NewFrame();
 
-    DrawESP();
     DrawMenu();
 
     ImGui::EndFrame();
@@ -182,4 +182,4 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     return old_eglSwapBuffers(dpy, surface);
 }
 
-#endif //ZYGISK_MOD_MENU_MENU_H
+#endif //ZYGISK_IMGUI_MOD_MENU_MENU_H

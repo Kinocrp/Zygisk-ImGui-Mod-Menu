@@ -2,15 +2,13 @@
 // Created by Kino on 10/26/2025.
 //
 
-#ifndef ZYGISK_MOD_MENU_GLOBALS_H
-#define ZYGISK_MOD_MENU_GLOBALS_H
+#ifndef ZYGISK_IMGUI_MOD_MENU_GLOBALS_H
+#define ZYGISK_IMGUI_MOD_MENU_GLOBALS_H
 
 #pragma once
 
 #include "imgui.h"
-#include <string>
-#include <vector>
-#include <thread>
+#include "esp-manager.h"
 
 struct TouchEvent {
     float x = 0.0f;
@@ -29,18 +27,11 @@ extern bool g_imgui_initialized;
 
 // ESP
 
-extern std::thread ESPThread;
-struct ESPObject {
-    void* espObj;
-    int objID;
-    float x, y;
-};
-extern std::vector<ESPObject> g_ESPObjects;
-extern float ESP_FPS;
-extern void* mainCamera;
+extern std::thread g_ESPThread;
+extern ESPManager g_ESPManager;
 
 // Global Value
 
 extern bool IsESP;
 
-#endif //ZYGISK_MOD_MENU_GLOBALS_H
+#endif //ZYGISK_IMGUI_MOD_MENU_GLOBALS_H

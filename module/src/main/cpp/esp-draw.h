@@ -2,8 +2,8 @@
 // Created by Kino on 10/27/2025.
 //
 
-#ifndef ZYGISK_MOD_MENU_ESP_H
-#define ZYGISK_MOD_MENU_ESP_H
+#ifndef ZYGISK_IMGUI_MOD_MENU_ESP_DRAW_H
+#define ZYGISK_IMGUI_MOD_MENU_ESP_DRAW_H
 
 #include "imgui_internal.h"
 
@@ -53,4 +53,4 @@ namespace ESP {
 }
 
 
-#endif //ZYGISK_MOD_MENU_ESP_H
+#endif //ZYGISK_IMGUI_MOD_MENU_ESP_DRAW_H

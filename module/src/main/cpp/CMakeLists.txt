@@ -43,7 +43,8 @@ add_library(${MODULE_NAME} SHARED
         il2cpp_hook.cpp
         globals.cpp
         menu.h
-        esp.h
+        esp-draw.h
+        esp-manager.h
         include/imgui/imgui.cpp
         include/imgui/imgui_draw.cpp
         include/imgui/imgui_demo.cpp
