@@ -29,7 +29,7 @@ extern bool g_imgui_initialized;
 
 // ESP
 
-std::thread ESPThread;
+extern std::thread ESPThread;
 struct ESPObject {
     void* espObj;
     int objID;

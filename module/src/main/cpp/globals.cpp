@@ -13,7 +13,7 @@ int g_height = 0;
 bool g_imgui_initialized = false;
 
 // ESP
-
+std::thread ESPThread;
 std::vector<ESPObject> g_ESPObjects = {
         { nullptr, 1, 100.f, 100.f},
         { nullptr, 2, 150.f, 150.f},
