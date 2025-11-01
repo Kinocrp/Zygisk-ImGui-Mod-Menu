@@ -32,14 +32,21 @@ public:
     std::vector<ESPStruct>& get_ESPObjects() { return ESPObjects; }
     const std::vector<ESPStruct>& get_ESPObjects() const { return ESPObjects; }
 
-    void addObj(void* espObj, int objID, float x, float y) {
+    void modifyObj(void* obj, int objID, float x, float y) {
         std::lock_guard<std::mutex> lock(espMutex);
-        ESPObjects.push_back({ espObj, objID, x, y });
+        auto it = std::find_if(ESPObjects.begin(), ESPObjects.end(), [&](const ESPStruct& o) { return o.objID == objID; });
+        if (it != ESPObjects.end()) {
+            it->espObj = obj;
+            it->x = x;
+            it->y = y;
+        } else {
+            ESPObjects.push_back({ obj, objID, x, y });
+        }
     }
 
     void removeObj(int objID) {
         std::lock_guard<std::mutex> lock(espMutex);
-        auto it = std::find_if(ESPObjects.begin(), ESPObjects.end(), [&](const ESPStruct& obj) { return obj.objID == objID; });
+        auto it = std::find_if(ESPObjects.begin(), ESPObjects.end(), [&](const ESPStruct& o) { return o.objID == objID; });
         if (it != ESPObjects.end()) { ESPObjects.erase(it); }
     }
 

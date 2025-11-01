@@ -515,9 +515,9 @@ std::string replace_get_productName() {
 // Hook
 void il2cpp_hook() {
     g_ESPThread = std::thread(ESPRuntime, std::ref(g_ESPManager), std::ref(IsESP));
-    g_ESPManager.addObj(nullptr, 1, 150, 150); // Add Objects
-    g_ESPManager.addObj(nullptr, 2, 300, 300);
-    g_ESPManager.addObj(nullptr, 3, 450, 450);
+    g_ESPManager.modifyObj(nullptr, 1, 150, 150); // Add Objects
+    g_ESPManager.modifyObj(nullptr, 2, 300, 300);
+    g_ESPManager.modifyObj(nullptr, 3, 450, 450);
     // Example
     Il2CppDomain* domain = il2cpp_domain_get();
     Il2CppImage* UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");
