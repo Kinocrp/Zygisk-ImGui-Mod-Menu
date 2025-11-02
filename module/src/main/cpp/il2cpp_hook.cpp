@@ -9,6 +9,7 @@
 #include <cinttypes>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include <sstream>
 #include <fstream>
 #include <unistd.h>
@@ -39,6 +40,73 @@ void init_il2cpp_api(void *handle) {
 
 #undef DO_API
 }
+
+struct FieldCache {
+    std::string name;
+    size_t offset;
+};
+
+struct MethodParamCache {
+    std::string name;
+    int index;
+};
+
+struct MethodCache {
+    std::string name;
+    uint64_t methodPointer;
+    std::vector<MethodParamCache> params;
+};
+
+struct ClassCache {
+    std::string nameSpace;
+    std::string name;
+    std::vector<FieldCache> fields;
+    std::vector<MethodCache> methods;
+};
+
+struct ImageCache {
+    std::string name;
+    std::vector<ClassCache> classes;
+};
+
+struct Domain {
+    std::vector<ImageCache> images;
+};
+
+Domain g_il2cppCache;
+
+struct MethodKey {
+    std::string image;
+    std::string namespaceName;
+    std::string className;
+    std::string methodName;
+    int paramIndex;
+    std::string paramName;
+
+    bool operator==(const MethodKey &other) const {
+        return image == other.image &&
+               namespaceName == other.namespaceName &&
+               className == other.className &&
+               methodName == other.methodName &&
+               paramIndex == other.paramIndex &&
+               paramName == other.paramName;
+    }
+};
+
+struct MethodKeyHash {
+    size_t operator()(const MethodKey &k) const {
+        size_t h = std::hash<std::string>()(k.image);
+        h ^= std::hash<std::string>()(k.namespaceName) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<std::string>()(k.className) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<std::string>()(k.methodName) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<int>()(k.paramIndex) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        h ^= std::hash<std::string>()(k.paramName) + 0x9e3779b9 + (h << 6) + (h >> 2);
+        return h;
+    }
+};
+
+std::unordered_map<MethodKey, MethodCache*, MethodKeyHash> g_methodMap;
+std::unordered_map<std::string, std::unordered_map<std::string, size_t>> g_fieldMap;
 
 std::string get_method_modifier(uint32_t flags) {
     std::stringstream outPut;
@@ -94,17 +162,19 @@ bool _il2cpp_type_is_byref(const Il2CppType *type) {
     return byref;
 }
 
-std::string dump_method(Il2CppClass *klass) {
+std::string dump_method(Il2CppClass *klass, ClassCache& classCache) {
     std::stringstream outPut;
     outPut << "\n\t// Methods\n";
     void *iter = nullptr;
     while (auto method = il2cpp_class_get_methods(klass, &iter)) {
+        MethodCache methodCache;
         //TODO attribute
         if (method->methodPointer) {
             outPut << "\t// RVA: 0x";
             outPut << std::hex << (uint64_t) method->methodPointer - il2cpp_base;
             outPut << " VA: 0x";
             outPut << std::hex << (uint64_t) method->methodPointer;
+            methodCache.methodPointer = (uint64_t)method->methodPointer;
         } else {
             outPut << "\t// RVA: 0x VA: 0x0";
         }
@@ -123,8 +193,10 @@ std::string dump_method(Il2CppClass *klass) {
         auto return_class = il2cpp_class_from_type(return_type);
         outPut << il2cpp_class_get_name(return_class) << " " << il2cpp_method_get_name(method)
                << "(";
+        methodCache.name = il2cpp_method_get_name(method);
         auto param_count = il2cpp_method_get_param_count(method);
         for (int i = 0; i < param_count; ++i) {
+            MethodParamCache paramCache;
             auto param = il2cpp_method_get_param(method, i);
             auto attrs = param->attrs;
             if (_il2cpp_type_is_byref(param)) {
@@ -147,11 +219,15 @@ std::string dump_method(Il2CppClass *klass) {
             outPut << il2cpp_class_get_name(parameter_class) << " "
                    << il2cpp_method_get_param_name(method, i);
             outPut << ", ";
+            paramCache.name = il2cpp_method_get_param_name(method, i);
+            paramCache.index = i;
+            methodCache.params.push_back(paramCache);
         }
         if (param_count > 0) {
             outPut.seekp(-2, outPut.cur);
         }
         outPut << ") { }\n";
+        classCache.methods.push_back(methodCache);
         //TODO GenericInstMethod
     }
     return outPut.str();
@@ -196,12 +272,13 @@ std::string dump_property(Il2CppClass *klass) {
     return outPut.str();
 }
 
-std::string dump_field(Il2CppClass *klass) {
+std::string dump_field(Il2CppClass *klass, ClassCache& classCache) {
     std::stringstream outPut;
     outPut << "\n\t// Fields\n";
     auto is_enum = il2cpp_class_is_enum(klass);
     void *iter = nullptr;
     while (auto field = il2cpp_class_get_fields(klass, &iter)) {
+        FieldCache fieldCache;
         //TODO attribute
         outPut << "\t";
         auto attrs = il2cpp_field_get_flags(field);
@@ -237,6 +314,7 @@ std::string dump_field(Il2CppClass *klass) {
         auto field_type = il2cpp_field_get_type(field);
         auto field_class = il2cpp_class_from_type(field_type);
         outPut << il2cpp_class_get_name(field_class) << " " << il2cpp_field_get_name(field);
+        fieldCache.name = il2cpp_field_get_name(field);
         //TODO 获取构造函数初始化后的字段值
         if (attrs & FIELD_ATTRIBUTE_LITERAL && is_enum) {
             uint64_t val = 0;
@@ -244,14 +322,18 @@ std::string dump_field(Il2CppClass *klass) {
             outPut << " = " << std::dec << val;
         }
         outPut << "; // 0x" << std::hex << il2cpp_field_get_offset(field) << "\n";
+        fieldCache.offset = il2cpp_field_get_offset(field);
+        classCache.fields.push_back(fieldCache);
     }
     return outPut.str();
 }
 
-std::string dump_type(const Il2CppType *type) {
+std::string dump_type(const Il2CppType *type, ImageCache& imgCache) {
     std::stringstream outPut;
+    ClassCache classCache;
     auto *klass = il2cpp_class_from_type(type);
     outPut << "\n// Namespace: " << il2cpp_class_get_namespace(klass) << "\n";
+    classCache.nameSpace = il2cpp_class_get_namespace(klass);
     auto flags = il2cpp_class_get_flags(klass);
     if (flags & TYPE_ATTRIBUTE_SERIALIZABLE) {
         outPut << "[Serializable]\n";
@@ -297,6 +379,7 @@ std::string dump_type(const Il2CppType *type) {
         outPut << "class ";
     }
     outPut << il2cpp_class_get_name(klass); //TODO genericContainerIndex
+    classCache.name = il2cpp_class_get_name(klass);
     std::vector<std::string> extends;
     auto parent = il2cpp_class_get_parent(klass);
     if (!is_valuetype && !is_enum && parent) {
@@ -316,11 +399,12 @@ std::string dump_type(const Il2CppType *type) {
         }
     }
     outPut << "\n{";
-    outPut << dump_field(klass);
+    outPut << dump_field(klass, classCache);
     outPut << dump_property(klass);
-    outPut << dump_method(klass);
+    outPut << dump_method(klass, classCache);
     //TODO EventInfo
     outPut << "}\n";
+    imgCache.classes.push_back(classCache);
     return outPut.str();
 }
 
@@ -362,15 +446,18 @@ void il2cpp_dump(const char *outDir) {
         for (int i = 0; i < size; ++i) {
             auto image = il2cpp_assembly_get_image(assemblies[i]);
             std::stringstream imageStr;
+            ImageCache imgCache;
             imageStr << "\n// Dll : " << il2cpp_image_get_name(image);
+            imgCache.name = il2cpp_image_get_name(image);
             auto classCount = il2cpp_image_get_class_count(image);
             for (int j = 0; j < classCount; ++j) {
                 auto klass = il2cpp_image_get_class(image, j);
                 auto type = il2cpp_class_get_type(const_cast<Il2CppClass *>(klass));
                 //LOGD("type name : %s", il2cpp_type_get_name(type));
-                auto outPut = imageStr.str() + dump_type(type);
+                auto outPut = imageStr.str() + dump_type(type, imgCache);
                 outPuts.push_back(outPut);
             }
+            g_il2cppCache.images.push_back(imgCache);
         }
     } else {
         LOGI("Version less than 2018.3");
@@ -395,8 +482,10 @@ void il2cpp_dump(const char *outDir) {
         typedef Il2CppArray *(*Assembly_GetTypes_ftn)(void *, void *);
         for (int i = 0; i < size; ++i) {
             auto image = il2cpp_assembly_get_image(assemblies[i]);
+            ImageCache imgCache;
             std::stringstream imageStr;
             auto image_name = il2cpp_image_get_name(image);
+            imgCache.name = image_name;
             imageStr << "\n// Dll : " << image_name;
             //LOGD("image name : %s", image->name);
             auto imageName = std::string(image_name);
@@ -413,9 +502,10 @@ void il2cpp_dump(const char *outDir) {
                 auto klass = il2cpp_class_from_system_type((Il2CppReflectionType *) items[j]);
                 auto type = il2cpp_class_get_type(klass);
                 //LOGD("type name : %s", il2cpp_type_get_name(type));
-                auto outPut = imageStr.str() + dump_type(type);
+                auto outPut = imageStr.str() + dump_type(type, imgCache);
                 outPuts.push_back(outPut);
             }
+            g_il2cppCache.images.push_back(imgCache);
         }
     }
     LOGI("write dump file");
@@ -428,48 +518,45 @@ void il2cpp_dump(const char *outDir) {
     }
     outStream.close();
     LOGI("dump done!");
+
+    for (auto &img : g_il2cppCache.images) {
+        for (auto &klass : img.classes) {
+            for (auto &method : klass.methods) {
+                if (method.params.empty()) {
+                    MethodKey key{img.name, klass.nameSpace, klass.name, method.name, -1, ""};
+                    g_methodMap[key] = &method;
+                } else {
+                    for (auto &param : method.params) {
+                        MethodKey key{img.name, klass.nameSpace, klass.name, method.name, param.index, param.name};
+                        g_methodMap[key] = &method;
+                    }
+                }
+            }
+            for (auto &field : klass.fields) {
+                g_fieldMap[klass.name][field.name] = field.offset;
+            }
+        }
+    }
 }
 
-Il2CppImage* getImage(Il2CppDomain* domain, const char* dllName) {
-    size_t assemblyCount = 0;
-    const Il2CppAssembly** assemblies = il2cpp_domain_get_assemblies(domain, &assemblyCount);
-
-    for (size_t i = 0; i < assemblyCount; ++i) {
-        const Il2CppImage* cimage = il2cpp_assembly_get_image(assemblies[i]);
-        const char* name = il2cpp_image_get_name(cimage);
-        if (name && strcmp(name, dllName) == 0) {
-            return const_cast<Il2CppImage*>(cimage);
-        }
+void* get_method(const char* imgName, const char* namespaceName, const char* className, const char* methodName, const char* paramName = nullptr, int paramIndex = -1) {
+    MethodKey key{imgName, namespaceName, className, methodName, paramIndex, paramName ? paramName : ""};
+    auto it = g_methodMap.find(key);
+    if (it != g_methodMap.end()) {
+        return reinterpret_cast<void*>(it->second->methodPointer);
     }
     return nullptr;
 }
 
-const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodName, int paramIndex, const char* iparamName) {
-    void* iter = nullptr;
-    const MethodInfo* method = nullptr;
-
-    while ((method = il2cpp_class_get_methods(klass, &iter))) {
-        const char* currentName = il2cpp_method_get_name(method);
-        if (strcmp(currentName, methodName) != 0)
-            continue;
-
-        int paramCount = il2cpp_method_get_param_count(method);
-        if (paramIndex < 0 || paramIndex >= paramCount)
-            continue;
-
-        const char* paramName = il2cpp_method_get_param_name(method, paramIndex);
-        if (!paramName)
-            continue;
-
-        if (strcmp(paramName, iparamName) == 0) {
-            LOGI("[FOUND] %s (arg %d: %s) -> %p",
-                 currentName, paramIndex, paramName, method->methodPointer);
-            return method;
+size_t get_field(const char* className, const char* fieldName) {
+    auto clsIt = g_fieldMap.find(className);
+    if (clsIt != g_fieldMap.end()) {
+        auto fldIt = clsIt->second.find(fieldName);
+        if (fldIt != clsIt->second.end()) {
+            return fldIt->second;
         }
     }
-
-    LOGI("[NOT FOUND] %s (arg %d: %s)", methodName, paramIndex, iparamName);
-    return nullptr;
+    return 0;
 }
 
 // ESP
@@ -490,16 +577,6 @@ void ESPRuntime(ESPManager& manager, bool& ESP) {
             Il2CppObject* espObj = (Il2CppObject*)obj.espObj;
             Il2CppObject* cameraObj = (Il2CppObject*)manager.get_Camera();
 
-            // The Way To Get ScreenPoint
-            // il2cpp_field_get_value(Il2CppObject*, FieldInfo*, &worldLocVInt);          // If Field Type Is VInt3
-            // il2cpp_field_get_value(Il2CppObject*, FieldInfo*, &worldPosVec);           // If Field Type Is Vector3
-            // worldPosVec = worldLocVInt / 1000.0f;                                      // Convert VInt3 To Vector3 (Divide By 1000 If needed, It's 1000 Normally)
-            // (Il2CppObject*)screenPointObj = WorldToScreenPoint(worldPosVec);           // Call UnityEngine.Camera::WorldToScreenPoint(cameraObj, worldPosVec)
-            // il2cpp_field_get_value(screenPointObj, FieldInfo*, &screenPosVec.x);       // Read screen X coordinate
-            // il2cpp_field_get_value(screenPointObj, FieldInfo*, &screenPosVec.y);       // Read screen Y coordinate
-            // il2cpp_field_get_value(screenPointObj, FieldInfo*, &screenPosVec.z);       // Read screen Z coordinate (Depth)
-            // obj.x = screenPosVec.x                                                     // Set New screen X coordinate
-            // obj.y = g_height - screenPosVec.y                                          // Set New screen Y coordinate
         }
     }
 }
@@ -519,11 +596,7 @@ void il2cpp_hook() {
     g_ESPManager.modifyObj(nullptr, 2, 300, 300);
     g_ESPManager.modifyObj(nullptr, 3, 450, 450);
     // Example
-    Il2CppDomain* domain = il2cpp_domain_get();
-    Il2CppImage* UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");
-
-    Il2CppClass* Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
-    DobbyHook((void *)(il2cpp_class_get_method_from_name(Application, "get_productName",0)->methodPointer),
+    DobbyHook((void *)(get_method("UnityEngine.CoreModule.dll", "UnityEngine", "Application", "get_productName")),
               (void*)replace_get_productName,
               (void**)&original_get_productName);
 }
