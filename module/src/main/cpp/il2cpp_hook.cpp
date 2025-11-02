@@ -429,28 +429,6 @@ void il2cpp_dump(const char *outDir) {
     LOGI("dump done!");
 }
 
-// ESP
-void ESPRuntime(ESPManager& manager, bool& ESP) {
-    struct VInt3 { int x; int y; int z; };
-    struct Vector3Value { float x; float y; float z; };
-
-    VInt3 worldLocVInt;
-    Vector3Value worldPosVec;
-    Vector3Value screenPosVec;
-
-    // Do Not Call Too Many Api In The Loop
-
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / manager.get_FPS()));
-        if (!ESP) continue;
-        for (auto& obj : manager.get_ESPObjects()) {
-            Il2CppObject* espObj = (Il2CppObject*)obj.espObj;
-            Il2CppObject* cameraObj = (Il2CppObject*)manager.get_Camera();
-
-        }
-    }
-}
-
 Il2CppImage* getImage(Il2CppDomain* domain, const char* dllName) {
     size_t assemblyCount = 0;
     const Il2CppAssembly** assemblies = il2cpp_domain_get_assemblies(domain, &assemblyCount);
@@ -483,6 +461,28 @@ const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodNa
             LOGI("[FOUND] %s (arg %d: %s) -> %p",
                  currentName, paramIndex, paramName, method->methodPointer);
             return method;
+        }
+    }
+}
+
+// ESP
+void ESPRuntime(ESPManager& manager, bool& ESP) {
+    struct VInt3 { int x; int y; int z; };
+    struct Vector3Value { float x; float y; float z; };
+
+    VInt3 worldLocVInt;
+    Vector3Value worldPosVec;
+    Vector3Value screenPosVec;
+
+    // Do Not Call Too Many Api In The Loop
+
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / manager.get_FPS()));
+        if (!ESP) continue;
+        for (auto& obj : manager.get_ESPObjects()) {
+            Il2CppObject* espObj = (Il2CppObject*)obj.espObj;
+            Il2CppObject* cameraObj = (Il2CppObject*)manager.get_Camera();
+
         }
     }
 }
