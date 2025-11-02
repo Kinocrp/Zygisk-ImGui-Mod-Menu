@@ -492,8 +492,8 @@ void ESPRuntime(ESPManager& manager, bool& ESP) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000 / manager.get_FPS()));
         if (!ESP) continue;
         for (auto& obj : manager.get_ESPObjects()) {
-            Il2CppObject* espObj = (Il2CppObject*)obj.espObj;
-            Il2CppObject* cameraObj = (Il2CppObject*)manager.get_Camera();
+            void* espObj = obj.espObj;
+            void* cameraObj = manager.get_Camera();
 
         }
     }
