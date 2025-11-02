@@ -432,13 +432,10 @@ void il2cpp_dump(const char *outDir) {
 Il2CppImage* getImage(Il2CppDomain* domain, const char* dllName) {
     size_t assemblyCount = 0;
     const Il2CppAssembly** assemblies = il2cpp_domain_get_assemblies(domain, &assemblyCount);
-
     for (size_t i = 0; i < assemblyCount; ++i) {
         const Il2CppImage* cimage = il2cpp_assembly_get_image(assemblies[i]);
         const char* name = il2cpp_image_get_name(cimage);
-        if (name && strcmp(name, dllName) == 0) {
-            return const_cast<Il2CppImage*>(cimage);
-        }
+        if (name && strcmp(name, dllName) == 0) return const_cast<Il2CppImage*>(cimage);
     }
     return nullptr;
 }
@@ -446,24 +443,39 @@ Il2CppImage* getImage(Il2CppDomain* domain, const char* dllName) {
 const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodName, int paramIndex, const char* iparamName) {
     void* iter = nullptr;
     const MethodInfo* method = nullptr;
-
     while ((method = il2cpp_class_get_methods(klass, &iter))) {
         const char* currentName = il2cpp_method_get_name(method);
-        if (strcmp(currentName, methodName) != 0)
-            continue;
+        if (strcmp(currentName, methodName) != 0) continue;
         int paramCount = il2cpp_method_get_param_count(method);
-        if (paramIndex < 0 || paramIndex >= paramCount)
-            continue;
+        if (paramIndex < 0 || paramIndex >= paramCount) continue;
         const char* paramName = il2cpp_method_get_param_name(method, paramIndex);
-        if (!paramName)
-            continue;
-        if (strcmp(paramName, iparamName) == 0) {
-            LOGI("[FOUND] %s (arg %d: %s) -> %p",
-                 currentName, paramIndex, paramName, method->methodPointer);
-            return method;
-        }
+        if (!paramName) continue;
+        if (strcmp(paramName, iparamName) == 0) return method;
     }
 }
+
+struct Il2CppCache {
+
+    // Image
+    Il2CppImage* UnityEngine_CoreModule = nullptr;
+
+    // Class
+    Il2CppClass* Application = nullptr;
+
+    // Method
+    void* get_productName = nullptr;
+
+    // Offset
+
+    // Function
+
+    void init() {
+        Il2CppDomain* domain = il2cpp_domain_get();
+        UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");
+        Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
+        get_productName = (void*)il2cpp_class_get_method_from_name(Application, "get_productName",0)->methodPointer;
+    }
+};
 
 // ESP
 void ESPRuntime(ESPManager& manager, bool& ESP) {
@@ -497,16 +509,15 @@ std::string replace_get_productName() {
 
 // Hook
 void il2cpp_hook() {
+    Il2CppCache g_Il2CppCache;
+    g_Il2CppCache.init();
+
     g_ESPThread = std::thread(ESPRuntime, std::ref(g_ESPManager), std::ref(IsESP));
     g_ESPManager.modifyObj(nullptr, 1, 150, 150); // Add Objects
     g_ESPManager.modifyObj(nullptr, 2, 300, 300);
     g_ESPManager.modifyObj(nullptr, 3, 450, 450);
     // Example
-    Il2CppDomain* domain = il2cpp_domain_get();
-    Il2CppImage* UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");
-
-    Il2CppClass* Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
-    DobbyHook((void *)(il2cpp_class_get_method_from_name(Application, "get_productName",0)->methodPointer),
+    DobbyHook((void *)(g_Il2CppCache.get_productName),
               (void*)replace_get_productName,
               (void**)&original_get_productName);
 }
