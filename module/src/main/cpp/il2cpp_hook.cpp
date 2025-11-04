@@ -454,6 +454,37 @@ const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodNa
     }
 }
 
+template<typename T>
+void set_field_value(void* obj, size_t offset, T value) {
+    uint8_t* base = reinterpret_cast<uint8_t*>(obj);
+    T* fieldPtr = reinterpret_cast<T*>(base + offset);
+    *fieldPtr = value;
+}
+
+template<typename T>
+T get_field_value(void* obj, size_t offset) {
+    return *reinterpret_cast<T*>((uintptr_t)obj + offset);
+}
+
+template<typename T>
+T array_get_element(void* arrayObj, uint32_t index) {
+    if (!arrayObj) return T();
+
+    Il2CppArray* arr = reinterpret_cast<Il2CppArray*>(arrayObj);
+    uint32_t length = *reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(arr) + 0x18);
+    if (index >= length) return T();
+
+    uintptr_t dataStart = reinterpret_cast<uintptr_t>(arr) + 0x20;
+
+    if constexpr (std::is_pointer_v<T>) {
+        void** data = reinterpret_cast<void**>(dataStart);
+        return reinterpret_cast<T>(data[index]);
+    } else {
+        char* data = reinterpret_cast<char*>(dataStart);
+        return *reinterpret_cast<T*>(data + index * sizeof(T));
+    }
+}
+
 struct Il2CppCache {
 
     // Image
@@ -475,7 +506,7 @@ struct Il2CppCache {
         Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
         get_productName = (void*)il2cpp_class_get_method_from_name(Application, "get_productName",0)->methodPointer;
     }
-};
+} g_Il2CppCache;
 
 // ESP
 void ESPRuntime(ESPManager& manager, bool& ESP) {
@@ -509,7 +540,6 @@ std::string replace_get_productName() {
 
 // Hook
 void il2cpp_hook() {
-    Il2CppCache g_Il2CppCache;
     g_Il2CppCache.init();
 
     g_ESPThread = std::thread(ESPRuntime, std::ref(g_ESPManager), std::ref(IsESP));
