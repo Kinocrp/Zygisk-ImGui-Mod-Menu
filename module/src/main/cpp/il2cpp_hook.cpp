@@ -551,13 +551,14 @@ void replace_example() {
 // Hook
 void il2cpp_hook() {
     g_Il2CppCache.init();
+
     // Add Objects Into ESPManager
     g_ESPManager.modifyObj(1, nullptr, 0, 150, 150, 0);
     g_ESPManager.modifyObj(2, nullptr, 0, 300, 300, 0);
     g_ESPManager.modifyObj(3, nullptr, 0, 450, 450, 0);
+
     // Example DobbyHook
     DobbyHook((void *)(nullptr),
               (void*)replace_example,
               (void**)&original_example);
-
 }
