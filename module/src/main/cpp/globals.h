@@ -20,18 +20,15 @@ struct TouchEvent {
 extern TouchEvent g_last_touch;
 
 // Menu
-
 extern int g_width;
 extern int g_height;
 extern bool g_imgui_initialized;
+extern std::string g_hook_status;
 
 // ESP
-
-extern std::thread g_ESPThread;
 extern ESPManager g_ESPManager;
 
 // Global Value
-
 extern bool IsESP;
 
 #endif //ZYGISK_IMGUI_MOD_MENU_GLOBALS_H

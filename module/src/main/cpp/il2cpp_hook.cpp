@@ -15,7 +15,6 @@
 #include "log.h"
 #include "il2cpp-tabledefs.h"
 #include "il2cpp-class.h"
-#include "globals.h"
 
 #define DO_API(r, n, p) r (*n) p
 
@@ -426,6 +425,7 @@ void il2cpp_dump(const char *outDir) {
         outStream << outPuts[i];
     }
     outStream.close();
+    g_hook_status = "HOOK STATUS : Active";
     LOGI("dump done!");
 }
 
@@ -471,10 +471,10 @@ T array_get_element(void* arrayObj, uint32_t index) {
     if (!arrayObj) return T();
 
     Il2CppArray* arr = reinterpret_cast<Il2CppArray*>(arrayObj);
-    uint32_t length = *reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(arr) + 0x18);
+    uint32_t length = *reinterpret_cast<uint32_t*>(reinterpret_cast<uintptr_t>(arr) + il2cpp_offset_of_array_length_in_array_object_header());
     if (index >= length) return T();
 
-    uintptr_t dataStart = reinterpret_cast<uintptr_t>(arr) + 0x20;
+    uintptr_t dataStart = reinterpret_cast<uintptr_t>(arr) + il2cpp_array_object_header_size();
 
     if constexpr (std::is_pointer_v<T>) {
         void** data = reinterpret_cast<void**>(dataStart);
@@ -485,69 +485,79 @@ T array_get_element(void* arrayObj, uint32_t index) {
     }
 }
 
-struct Il2CppCache {
+// Struct
+struct VInt3Struct { int x; int y; int z; };
+struct Vector3Struct { float x; float y; float z; };
 
+struct Il2CppCache {
     // Image
     Il2CppImage* UnityEngine_CoreModule = nullptr;
 
     // Class
-    Il2CppClass* Application = nullptr;
+    Il2CppClass* Camera = nullptr;
 
     // Method
-    void* get_productName = nullptr;
 
     // Offset
 
     // Function
+    void (*WorldToScreenPoint_Injected)(void* _this, void* position, int eye, void* ret) = nullptr;
 
+    // Struct
+    Vector3Struct worldPos;
+    Vector3Struct screenPos;
+
+    // Object
+
+    // init
     void init() {
+        // Domain
         Il2CppDomain* domain = il2cpp_domain_get();
+
+        // Image
         UnityEngine_CoreModule = getImage(domain, "UnityEngine.CoreModule.dll");
-        Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
-        get_productName = (void*)il2cpp_class_get_method_from_name(Application, "get_productName",0)->methodPointer;
+
+        // Class
+        Camera = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Camera");
+
+        // Method
+
+        // Field
+
+        // Function
+        WorldToScreenPoint_Injected = (void(*)(void*, void*, int, void*))il2cpp_class_get_method_from_name(Camera, "WorldToScreenPoint_Injected", 3)->methodPointer;
     }
 } g_Il2CppCache;
 
 // ESP
-void ESPRuntime(ESPManager& manager, bool& ESP) {
-    struct VInt3 { int x; int y; int z; };
-    struct Vector3Value { float x; float y; float z; };
+void CalcESP(ESPManager& manager) {
+    auto& worldPos = g_Il2CppCache.worldPos;
+    auto& screenPos = g_Il2CppCache.screenPos;
+    for (auto& obj : manager.get_ESPObjects()) {
+        // ESP
+        void* objectHandle = obj.obj ? obj.obj : il2cpp_gchandle_get_target(obj.gchandle);
 
-    VInt3 worldLocVInt;
-    Vector3Value worldPosVec;
-    Vector3Value screenPosVec;
-
-    // Do Not Call Too Many Api In The Loop
-
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000 / manager.get_FPS()));
-        if (!ESP) continue;
-        for (auto& obj : manager.get_ESPObjects()) {
-            void* espObj = obj.espObj;
-            void* cameraObj = manager.get_Camera();
-
-        }
+        g_Il2CppCache.WorldToScreenPoint_Injected(g_ESPManager.get_Camera(), &worldPos, 2, &screenPos);
+        g_ESPManager.modifyObj(obj.objID, nullptr, obj.gchandle, screenPos.x, (float)g_height - screenPos.y, screenPos.z);
     }
 }
 
-// Example Usage
-std::string (*original_get_productName)() = nullptr;
-std::string replace_get_productName() {
-    std::string ret = original_get_productName();
-    LOGI("%s", ret.c_str());
-    return ret;
-}
+// Example Hook
+void (*original_example)() = nullptr;
+void replace_example() {
+    return;
+};
 
 // Hook
 void il2cpp_hook() {
     g_Il2CppCache.init();
+    // Add Objects Into ESPManager
+    g_ESPManager.modifyObj(1, nullptr, 0, 150, 150, 0);
+    g_ESPManager.modifyObj(2, nullptr, 0, 300, 300, 0);
+    g_ESPManager.modifyObj(3, nullptr, 0, 450, 450, 0);
+    // Example DobbyHook
+    DobbyHook((void *)(nullptr),
+              (void*)replace_example,
+              (void**)&original_example);
 
-    g_ESPThread = std::thread(ESPRuntime, std::ref(g_ESPManager), std::ref(IsESP));
-    g_ESPManager.modifyObj(nullptr, 1, 150, 150); // Add Objects
-    g_ESPManager.modifyObj(nullptr, 2, 300, 300);
-    g_ESPManager.modifyObj(nullptr, 3, 450, 450);
-    // Example
-    DobbyHook((void *)(g_Il2CppCache.get_productName),
-              (void*)replace_get_productName,
-              (void**)&original_get_productName);
 }

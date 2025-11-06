@@ -8,6 +8,7 @@
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
 #include <algorithm>
+#include <string>
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "imgui_impl_opengl3.h"
@@ -15,7 +16,6 @@
 #include <time.h>
 #include "font.h"
 #include "il2cpp_hook.h"
-#include "globals.h"
 #include "esp-draw.h"
 
 float scale = 1.0f;
@@ -112,9 +112,9 @@ void SetupImGui() {
     style.GrabMinSize   = 16 * scale;
 }
 
-void DrawESP(ESPManager& manager, bool& ESP) {
-    if (!ESP) return;
-    // ESP Example
+void DrawESP(ESPManager& manager) {
+    if (!IsESP) return;
+    CalcESP(std::ref(g_ESPManager));
     for (auto& obj : manager.get_ESPObjects()) {
         LOGI("%d [%0.2f, %0.2f]", obj.objID, obj.x, obj.y);
         ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), std::to_string(obj.objID).c_str(), regular, 50.0f);
@@ -141,7 +141,7 @@ void DrawMenu() {
         ImGui::SetNextWindowSizeConstraints(ImVec2(300 * scale, 300 * scale), ImVec2(300 * scale, 300 * scale));
         ImGui::Begin("Modded By Kinocrp", &showMenu, ImGuiWindowFlags_NoResize);
 
-        ImGui::Text("Basic Features");
+        ImGui::Text("%s", g_hook_status.c_str());
         ImGui::Checkbox("ESP", &IsESP);
         ImGui::End(); // Render end
     }
@@ -151,9 +151,6 @@ void DrawMenu() {
     ESP::DrawCircle(g_width / 2 - 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
     ESP::DrawCircle(g_width / 2 + 100, g_height, 25, true, ImVec4(0, 0, 0, 255));
     ESP::DrawText(ImVec2(g_width / 2, g_height - 12), ImVec4(255, 255, 255, 255), "Powered By Zygisk", regular, 20.0f);
-
-    // DrawESP
-    DrawESP(std::ref(g_ESPManager), std::ref(IsESP));
 }
 
 EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
@@ -174,6 +171,7 @@ EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     ImGui::NewFrame();
 
     DrawMenu();
+    DrawESP(std::ref(g_ESPManager));
 
     ImGui::EndFrame();
     ImGui::Render();
