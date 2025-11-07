@@ -23,7 +23,7 @@ extern TouchEvent g_last_touch;
 extern int g_width;
 extern int g_height;
 extern bool g_imgui_initialized;
-extern std::string g_hook_status;
+extern bool g_hook_status;
 
 // ESP
 extern ESPManager g_ESPManager;

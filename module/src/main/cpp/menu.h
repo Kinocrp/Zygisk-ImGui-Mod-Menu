@@ -140,8 +140,15 @@ void DrawMenu() {
         // Mod Menu
         ImGui::SetNextWindowSizeConstraints(ImVec2(300 * scale, 300 * scale), ImVec2(300 * scale, 300 * scale));
         ImGui::Begin("Modded By Kinocrp", &showMenu, ImGuiWindowFlags_NoResize);
+        ImGui::Text("STATUS");
+        ImGui::SameLine();
+        ImGui::Text("-");
+        ImGui::SameLine();
+        ImGui::TextColored(
+                g_hook_status ? ImVec4(0.2f, 1.0f, 0.2f, 1.0f) : ImVec4(1.0f, 0.2f, 0.2f, 1.0f),
+                g_hook_status ? "HOOKED" : "NOT HOOKED"
+        );
 
-        ImGui::Text("%s", g_hook_status.c_str());
         ImGui::Checkbox("ESP", &IsESP);
         ImGui::End(); // Render end
     }

@@ -11,7 +11,7 @@ TouchEvent g_last_touch;
 int g_width = 0;
 int g_height = 0;
 bool g_imgui_initialized = false;
-std::string g_hook_status = "HOOK STATUS : Inactive";
+bool g_hook_status = false;
 
 // ESP
 ESPManager g_ESPManager;

@@ -425,7 +425,6 @@ void il2cpp_dump(const char *outDir) {
         outStream << outPuts[i];
     }
     outStream.close();
-    g_hook_status = "HOOK STATUS : Active";
     LOGI("dump done!");
 }
 
@@ -550,6 +549,7 @@ void replace_example() {
 
 // Hook
 void il2cpp_hook() {
+    g_hook_status = true;
     g_Il2CppCache.init();
 
     // Add Objects Into ESPManager
