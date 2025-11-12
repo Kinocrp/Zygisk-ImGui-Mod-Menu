@@ -485,8 +485,8 @@ T array_get_element(void* arrayObj, uint32_t index) {
 }
 
 // Struct
-struct VInt3Struct { int x; int y; int z; };
-struct Vector3Struct { float x; float y; float z; };
+struct VInt3Struct { int x, y, z; };
+struct Vector3Struct { float x, y, z; };
 
 struct UnityIl2CppBindings {
     // Image
@@ -537,7 +537,6 @@ void CalcESP(ESPManager& manager) {
     auto& worldPos = g_UnityIl2CppBindings.worldPos;
     auto& screenPos = g_UnityIl2CppBindings.screenPos;
     for (auto& obj : manager.get_ESPObjects()) {
-        // ESP
         void* objectHandle = obj.obj ? obj.obj : il2cpp_gchandle_get_target(obj.gchandle);
 
         g_UnityIl2CppBindings.WorldToScreenPoint_Injected(g_ESPManager.get_Camera(), &worldPos, 2, &screenPos);
