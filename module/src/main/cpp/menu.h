@@ -117,7 +117,7 @@ void SetupImGui() {
 void DrawESP(ESPManager& manager) {
     if (!IsESP) return;
     for (auto& obj : manager.get_ESPObjects()) {
-        LOGI("%d [%0.2f, %0.2f]", obj.objID, obj.x, obj.y);
+        if (!obj.visible) continue;
         ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), std::to_string(obj.objID).c_str(), regular, 50.0f);
         ESP::DrawRect(ImVec4(obj.x - 50, obj.y - 50, 100, 100), ImVec4(255, 0, 0, 255), 5);
     }

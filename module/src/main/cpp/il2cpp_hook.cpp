@@ -486,8 +486,8 @@ T array_get_element(void* arrayObj, uint32_t index) {
 }
 
 // ESPManager
-void modifyObj(ESPManager& manager, int objID, void* obj, uint32_t gchandle, float x, float y, float z) {
-    manager.modifyObj(objID, obj, gchandle, x, y, z);
+void modifyObj(ESPManager& manager, int objID, void* obj, uint32_t gchandle, float x, float y, float z, bool visible) {
+    manager.modifyObj(objID, obj, gchandle, x, y, z, visible);
 }
 
 void removeObj(ESPManager& manager, int objID) {
@@ -557,7 +557,7 @@ void CalcESP(ESPManager& manager) {
         void* objectHandle = obj.obj ? obj.obj : il2cpp_gchandle_get_target(obj.gchandle);
 
         g_UnityIl2CppBindings.WorldToScreenPoint_Injected(g_ESPManager.get_Camera(), &worldPos, 2, &screenPos);
-        g_ESPManager.modifyObj(obj.objID, nullptr, obj.gchandle, screenPos.x, (float)g_height - screenPos.y, screenPos.z);
+        g_ESPManager.modifyObj(obj.objID, nullptr, obj.gchandle, screenPos.x, (float)g_height - screenPos.y, screenPos.z, obj.visible);
     }
 }
 
@@ -575,9 +575,9 @@ void il2cpp_hook() {
     g_UnityIl2CppBindings.init();
 
     // Add Objects Into ESPManager
-    modifyObj(g_ESPManager, 1, nullptr, 0, 150, 150, 0);
-    modifyObj(g_ESPManager, 2, nullptr, 0, 300, 300, 0);
-    modifyObj(g_ESPManager, 3, nullptr, 0, 450, 450, 0);
+    modifyObj(g_ESPManager, 1, nullptr, 0, 150, 150, 0, true);
+    modifyObj(g_ESPManager, 2, nullptr, 0, 300, 300, 0, false);
+    modifyObj(g_ESPManager, 3, nullptr, 0, 450, 450, 0, true);
 
     // InvokeOnBeforeRender
     DobbyHook((void *)(g_UnityIl2CppBindings.InvokeOnBeforeRender),

@@ -16,6 +16,7 @@ private:
         void* obj;
         uint32_t gchandle;
         float x, y, z;
+        bool visible;
     };
     std::vector<ESPStruct> ESPObjects;
 
@@ -26,7 +27,7 @@ public:
     std::vector<ESPStruct>& get_ESPObjects() { return ESPObjects; }
     const std::vector<ESPStruct>& get_ESPObjects() const { return ESPObjects; }
 
-    void modifyObj(int objID, void* obj, uint32_t gchandle, float x, float y, float z) {
+    void modifyObj(int objID, void* obj, uint32_t gchandle, float x, float y, float z, bool visible) {
         auto it = std::find_if(ESPObjects.begin(), ESPObjects.end(), [&](const ESPStruct& o) { return o.objID == objID; });
         if (it != ESPObjects.end()) {
             it->obj = obj;
@@ -34,8 +35,9 @@ public:
             it->x = x;
             it->y = y;
             it->z = z;
+            it->visible = visible;
         } else {
-            ESPObjects.push_back({ objID, obj, gchandle, x, y, z });
+            ESPObjects.push_back({ objID, obj, gchandle, x, y, z, visible });
         }
     }
 
