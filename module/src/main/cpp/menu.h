@@ -17,6 +17,7 @@
 #include "font.h"
 #include "il2cpp_hook.h"
 #include "esp-draw.h"
+#include "game.h"
 
 float scale = 1.0f;
 float baseFontSize = 14.0f;
@@ -114,7 +115,6 @@ void SetupImGui() {
 
 void DrawESP(ESPManager& manager) {
     if (!IsESP) return;
-    CalcESP(manager);
     for (auto& obj : manager.get_ESPObjects()) {
         LOGI("%d [%0.2f, %0.2f]", obj.objID, obj.x, obj.y);
         ESP::DrawText(ImVec2(obj.x, obj.y - 100), ImVec4(0, 255, 0, 255), std::to_string(obj.objID).c_str(), regular, 50.0f);
@@ -150,6 +150,12 @@ void DrawMenu() {
         );
 
         ImGui::Checkbox("ESP", &IsESP);
+
+        ImGui::SetWindowFontScale(0.75f * scale);
+        ImGui::SetCursorPosY(ImGui::GetWindowContentRegionMax().y - ImGui::GetTextLineHeight());
+        ImGui::SetCursorPosX((ImGui::GetWindowWidth() - ImGui::CalcTextSize(GamePackageName).x) * 0.5f);
+        ImGui::TextUnformatted(GamePackageName);
+        ImGui::SetWindowFontScale(scale);
         ImGui::End(); // Render end
     }
 
@@ -164,8 +170,7 @@ EGLBoolean (*old_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
 EGLBoolean hook_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_WIDTH, &g_width);
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &g_height);
-    if (!g_imgui_initialized)
-    {
+    if (!g_imgui_initialized) {
         SetupImGui();
         eglSwapInterval(dpy, 1); // vsync
         g_imgui_initialized = true;

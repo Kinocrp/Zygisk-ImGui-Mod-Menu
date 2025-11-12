@@ -488,14 +488,16 @@ T array_get_element(void* arrayObj, uint32_t index) {
 struct VInt3Struct { int x; int y; int z; };
 struct Vector3Struct { float x; float y; float z; };
 
-struct Il2CppCache {
+struct UnityIl2CppBindings {
     // Image
     Il2CppImage* UnityEngine_CoreModule = nullptr;
 
     // Class
     Il2CppClass* Camera = nullptr;
+    Il2CppClass* Application = nullptr;
 
     // Method
+    void* InvokeOnBeforeRender = nullptr;
 
     // Offset
 
@@ -518,47 +520,51 @@ struct Il2CppCache {
 
         // Class
         Camera = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Camera");
+        Application = il2cpp_class_from_name(UnityEngine_CoreModule, "UnityEngine", "Application");
 
         // Method
+        InvokeOnBeforeRender = (void*)il2cpp_class_get_method_from_name(Application, "InvokeOnBeforeRender", 0)->methodPointer;
 
         // Field
 
         // Function
         WorldToScreenPoint_Injected = (void(*)(void*, void*, int, void*))il2cpp_class_get_method_from_name(Camera, "WorldToScreenPoint_Injected", 3)->methodPointer;
     }
-} g_Il2CppCache;
+} g_UnityIl2CppBindings;
 
 // ESP
 void CalcESP(ESPManager& manager) {
-    auto& worldPos = g_Il2CppCache.worldPos;
-    auto& screenPos = g_Il2CppCache.screenPos;
+    auto& worldPos = g_UnityIl2CppBindings.worldPos;
+    auto& screenPos = g_UnityIl2CppBindings.screenPos;
     for (auto& obj : manager.get_ESPObjects()) {
         // ESP
         void* objectHandle = obj.obj ? obj.obj : il2cpp_gchandle_get_target(obj.gchandle);
 
-        g_Il2CppCache.WorldToScreenPoint_Injected(g_ESPManager.get_Camera(), &worldPos, 2, &screenPos);
+        g_UnityIl2CppBindings.WorldToScreenPoint_Injected(g_ESPManager.get_Camera(), &worldPos, 2, &screenPos);
         g_ESPManager.modifyObj(obj.objID, nullptr, obj.gchandle, screenPos.x, (float)g_height - screenPos.y, screenPos.z);
     }
 }
 
-// Example Hook
-void (*original_example)() = nullptr;
-void replace_example() {
-    return;
+// InvokeOnBeforeRender
+void (*original_InvokeOnBeforeRender)() = nullptr;
+void replace_InvokeOnBeforeRender() {
+    original_InvokeOnBeforeRender();
+    if (!IsESP) return;
+    CalcESP(std::ref(g_ESPManager));
 };
 
 // Hook
 void il2cpp_hook() {
     g_hook_status = true;
-    g_Il2CppCache.init();
+    g_UnityIl2CppBindings.init();
 
     // Add Objects Into ESPManager
     g_ESPManager.modifyObj(1, nullptr, 0, 150, 150, 0);
     g_ESPManager.modifyObj(2, nullptr, 0, 300, 300, 0);
     g_ESPManager.modifyObj(3, nullptr, 0, 450, 450, 0);
 
-    // Example DobbyHook
-    DobbyHook((void *)(nullptr),
-              (void*)replace_example,
-              (void**)&original_example);
+    // InvokeOnBeforeRender
+    DobbyHook((void *)(g_UnityIl2CppBindings.InvokeOnBeforeRender),
+              (void*)replace_InvokeOnBeforeRender,
+              (void**)&original_InvokeOnBeforeRender);
 }
