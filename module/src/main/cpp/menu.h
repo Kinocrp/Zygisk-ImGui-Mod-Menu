@@ -15,6 +15,8 @@
 #include "imgui_impl_android.h"
 #include <time.h>
 #include "font.h"
+#include "log.h"
+#include "globals.h"
 #include "esp-draw.h"
 #include "game.h"
 

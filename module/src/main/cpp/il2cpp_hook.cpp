@@ -451,6 +451,7 @@ const MethodInfo* FindMethodByParamName(Il2CppClass* klass, const char* methodNa
         if (!paramName) continue;
         if (strcmp(paramName, iparamName) == 0) return method;
     }
+    return nullptr;
 }
 
 template<typename T>
@@ -481,6 +482,22 @@ T array_get_element(void* arrayObj, uint32_t index) {
     } else {
         char* data = reinterpret_cast<char*>(dataStart);
         return *reinterpret_cast<T*>(data + index * sizeof(T));
+    }
+}
+
+// ESPManager
+void modifyObj(ESPManager& manager, int objID, void* obj, uint32_t gchandle, float x, float y, float z) {
+    manager.modifyObj(objID, obj, gchandle, x, y, z);
+}
+
+void removeObj(ESPManager& manager, int objID) {
+    size_t gchandle = manager.removeObj(objID);
+    if (!gchandle) il2cpp_gchandle_free(gchandle);
+}
+
+void clearAllObj(ESPManager& manager) {
+    for (auto& obj : manager.get_ESPObjects()) {
+        if (!obj.gchandle) il2cpp_gchandle_free(manager.removeObj(obj.objID));
     }
 }
 
@@ -558,9 +575,9 @@ void il2cpp_hook() {
     g_UnityIl2CppBindings.init();
 
     // Add Objects Into ESPManager
-    g_ESPManager.modifyObj(1, nullptr, 0, 150, 150, 0);
-    g_ESPManager.modifyObj(2, nullptr, 0, 300, 300, 0);
-    g_ESPManager.modifyObj(3, nullptr, 0, 450, 450, 0);
+    modifyObj(g_ESPManager, 1, nullptr, 0, 150, 150, 0);
+    modifyObj(g_ESPManager, 2, nullptr, 0, 300, 300, 0);
+    modifyObj(g_ESPManager, 3, nullptr, 0, 450, 450, 0);
 
     // InvokeOnBeforeRender
     DobbyHook((void *)(g_UnityIl2CppBindings.InvokeOnBeforeRender),

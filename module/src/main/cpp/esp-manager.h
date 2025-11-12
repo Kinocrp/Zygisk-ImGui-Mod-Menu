@@ -39,13 +39,14 @@ public:
         }
     }
 
-    void removeObj(int objID) {
+    size_t removeObj(int objID) {
         auto it = std::find_if(ESPObjects.begin(), ESPObjects.end(), [&](const ESPStruct& o) { return o.objID == objID; });
-        if (it != ESPObjects.end()) { ESPObjects.erase(it); }
-    }
-
-    void clearAllObj() {
-        ESPObjects.clear();
+        if (it != ESPObjects.end()) {
+            size_t ret = it->gchandle;
+            ESPObjects.erase(it);
+            return ret;
+        }
+        return 0;
     }
 };
 

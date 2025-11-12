@@ -3,7 +3,6 @@
 //
 
 #include "globals.h"
-#include <string>
 
 TouchEvent g_last_touch;
 
