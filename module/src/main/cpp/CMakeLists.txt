@@ -14,11 +14,16 @@ set(LINKER_FLAGS "-ffixed-x18 -Wl,--hash-style=both")
 set(C_FLAGS "-Werror=format -fdata-sections -ffunction-sections")
 set(CXX_FLAGS "${CXX_FLAGS} -fno-exceptions -fno-rtti")
 
-if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(C_FLAGS "${C_FLAGS} -O0")
+    add_definitions(-DDEBUG)
+    set(LOG_LIBRARY log)
+
+else ()
     set(C_FLAGS "${C_FLAGS} -O2 -fvisibility=hidden -fvisibility-inlines-hidden")
     set(LINKER_FLAGS "${LINKER_FLAGS} -Wl,-exclude-libs,ALL -Wl,--gc-sections -Wl,--strip-all")
-else ()
-    set(C_FLAGS "${C_FLAGS} -O0")
+    set(LOG_LIBRARY "") 
+
 endif ()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${C_FLAGS}")
@@ -55,8 +60,7 @@ find_library(android android)
 find_library(LZ_LIB z)
 
 if (${ANDROID_PLATFORM_LEVEL} LESS 12)
-    message(FATAL_ERROR "OpenGL 2 is not supported before API level 11 /
-                      (currently using ${ANDROID_PLATFORM_LEVEL}).")
+    message(FATAL_ERROR "OpenGL 2 is not supported before API level 11")
     return()
 elseif (${ANDROID_PLATFORM_LEVEL} LESS 18)
     add_definitions("-DDYNAMIC_ES3")
@@ -66,7 +70,7 @@ else ()
 endif ()
 
 add_subdirectory(dobby)
-target_link_libraries(${MODULE_NAME} PRIVATE log dobby_static ${egl} ${android} ${OPENGL_LIB} ${LZ_LIB})
+target_link_libraries(${MODULE_NAME} PRIVATE dobby_static ${egl} ${android} ${OPENGL_LIB} ${LZ_LIB} ${LOG_LIBRARY})
 
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_command(TARGET ${MODULE_NAME} POST_BUILD
