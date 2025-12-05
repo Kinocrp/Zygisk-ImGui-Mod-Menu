@@ -449,13 +449,19 @@ const MethodInfo *get_method(Il2CppClass *klass, const char *name, int paramInde
     return nullptr;
 }
 
-void AppendPreloadMap(const std::string &path, const std::string &key, uint64_t value) {
+enum SaveType : uint8_t { 
+    Field = 0, 
+    Method = 1 
+};
+
+void AppendPreloadMap(const std::string &path, const std::string &key, uint64_t value, uint8_t type) {
     std::ofstream out(path, std::ios::binary | std::ios::app);
     if (out.is_open()) {
-        size_t len = key.size();
+        uint64_t len = key.size();
         out.write((char*)&len, sizeof(len));
         out.write(key.c_str(), len);
         out.write((char*)&value, sizeof(uint64_t));
+        out.write((char*)&type, sizeof(uint8_t));
         out.close();
     }
 }
@@ -465,20 +471,25 @@ void LoadPreloadMap(const std::string &path) {
     if (!in.is_open()) return;
     PreloadMap.clear();
     while (in.peek() != EOF) {
-        size_t len = 0;
+        uint64_t len = 0; 
         in.read((char*)&len, sizeof(len));
         if (!in) break;
         std::string key(len, '\0');
         in.read(&key[0], len);
         uint64_t value = 0;
         in.read((char*)&value, sizeof(uint64_t));
-        PreloadMap[key] = value + il2cpp_base;
+        uint8_t type = 0;
+        in.read((char*)&type, sizeof(uint8_t));
+        if (type == Method) {
+            PreloadMap[key] = value + il2cpp_base;
+        } else {
+            PreloadMap[key] = value; 
+        }
     }
     in.close();
 }
 
-enum Type { Field = 0, Method = 1 };
-void il2cpp_save(const std::string &path, Il2CppDomain *domain, const char *imageName, const char *namespaceName, const char *klassName, const char *name, Type type, int paramIndex = -1, const char *paramName = nullptr, const char *paramType = nullptr) {
+void il2cpp_save(const std::string &path, Il2CppDomain *domain, const char *imageName, const char *namespaceName, const char *klassName, const char *name, SaveType type, int paramIndex = -1, const char *paramName = nullptr, const char *paramType = nullptr) {
     auto image = get_image(domain, imageName);
     auto klass = il2cpp_class_from_name(image, namespaceName, klassName);
 
@@ -494,7 +505,7 @@ void il2cpp_save(const std::string &path, Il2CppDomain *domain, const char *imag
             break;
     }
 
-    AppendPreloadMap(path, key, result);
+    AppendPreloadMap(path, key, result, (uint8_t)type);
     LOGI("[SAVED] %s", key.c_str());
 }
 

@@ -159,7 +159,7 @@ jint proxy_JNI_OnLoad(JavaVM *vm, void *data) {
 
 void *(*orig_dlopen)(const char *filename, int flags, const void* caller_addr) = nullptr;
 void *proxy_dlopen(const char *filename, int flags, const void* caller_addr) {
-    /*  // block anti-cheat if needed
+    /* block anti-cheat if needed
     if (filename && strstr(filename, "anogs")) {
         LOGI("[BLOCK] %s", filename);
         return nullptr;
