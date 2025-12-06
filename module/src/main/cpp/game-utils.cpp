@@ -1,47 +1,44 @@
 #include "game-utils.h"
 #include <unistd.h>
-#include <thread>
-#include <chrono>
+#include <signal.h>
 #include <android/native_window.h>
 #include "log.h"
 
 static void PerformRestart(JNIEnv *env) {
-    LOGI("[CHEAT] restarting...");
 
-    jclass unityPlayerClass = env->FindClass("com/unity3d/player/UnityPlayer");
-    jfieldID currentActivityField = env->GetStaticFieldID(unityPlayerClass, "currentActivity", "Landroid/app/Activity;");
-    jobject currentActivity = env->GetStaticObjectField(unityPlayerClass, currentActivityField);
-    jclass contextClass = env->FindClass("android/content/Context");
+    jclass activityThreadClass = env->FindClass("android/app/ActivityThread");
+    if (env->ExceptionCheck()) { env->ExceptionClear(); LOGE("Failed to find ActivityThread"); return; }
+
+    jmethodID currentApplicationMethod = env->GetStaticMethodID(activityThreadClass, "currentApplication", "()Landroid/app/Application;");
+    if (env->ExceptionCheck()) { env->ExceptionClear(); LOGE("Failed to find currentApplication"); return; }
+
+    jobject context = env->CallStaticObjectMethod(activityThreadClass, currentApplicationMethod);
+    if (env->ExceptionCheck() || context == nullptr) { env->ExceptionClear(); LOGE("Failed to get Context"); return; }
+
+    jclass contextClass = env->GetObjectClass(context);
+    jmethodID getPackageManagerMethod = env->GetMethodID(contextClass, "getPackageManager", "()Landroid/content/pm/PackageManager;");
+    jobject packageManager = env->CallObjectMethod(context, getPackageManagerMethod);
 
     jmethodID getPackageNameMethod = env->GetMethodID(contextClass, "getPackageName", "()Ljava/lang/String;");
-    jstring packageName = (jstring) env->CallObjectMethod(currentActivity, getPackageNameMethod);
-    
-    jclass packageManagerClass = env->FindClass("android/content/pm/PackageManager");
+    jstring packageName = (jstring)env->CallObjectMethod(context, getPackageNameMethod);
+
+    jclass packageManagerClass = env->GetObjectClass(packageManager);
+
     jmethodID getLaunchIntentMethod = env->GetMethodID(packageManagerClass, "getLaunchIntentForPackage", "(Ljava/lang/String;)Landroid/content/Intent;");
-    jobject packageManager = env->CallObjectMethod(currentActivity, env->GetMethodID(contextClass, "getPackageManager", "()Landroid/content/pm/PackageManager;"));
     jobject intent = env->CallObjectMethod(packageManager, getLaunchIntentMethod, packageName);
 
-    jclass intentClass = env->FindClass("android/content/Intent");
+    if (intent == nullptr) {
+        LOGE("Could not get launch intent");
+        return;
+    }
+
+    jclass intentClass = env->GetObjectClass(intent);
     jmethodID addFlagsMethod = env->GetMethodID(intentClass, "addFlags", "(I)Landroid/content/Intent;");
-    env->CallObjectMethod(intent, addFlagsMethod, 0x10000000 | 0x00008000);
+    int flags = 0x10000000 | 0x00008000; 
+    env->CallObjectMethod(intent, addFlagsMethod, flags);
 
-    jclass pendingIntentClass = env->FindClass("android/app/PendingIntent");
-    jmethodID getActivityMethod = env->GetStaticMethodID(pendingIntentClass, "getActivity", "(Landroid/content/Context;ILandroid/content/Intent;I)Landroid/app/PendingIntent;");
-    jobject pendingIntent = env->CallStaticObjectMethod(pendingIntentClass, getActivityMethod, currentActivity, 123456, intent, 0x10000000);
-
-    jfieldID alarmServiceField = env->GetStaticFieldID(contextClass, "ALARM_SERVICE", "Ljava/lang/String;");
-    jstring alarmServiceString = (jstring) env->GetStaticObjectField(contextClass, alarmServiceField);
-    jmethodID getSystemServiceMethod = env->GetMethodID(contextClass, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
-    jobject alarmManager = env->CallObjectMethod(currentActivity, getSystemServiceMethod, alarmServiceString);
-
-    jclass alarmManagerClass = env->FindClass("android/app/AlarmManager");
-    jmethodID setMethod = env->GetMethodID(alarmManagerClass, "set", "(IJLandroid/app/PendingIntent;)V");
-    
-    jclass systemClass = env->FindClass("java/lang/System");
-    jmethodID currentTimeMillisMethod = env->GetStaticMethodID(systemClass, "currentTimeMillis", "()J");
-    jlong triggerAtMillis = env->CallStaticLongMethod(systemClass, currentTimeMillisMethod) + 500;
-    env->CallVoidMethod(alarmManager, setMethod, 1, triggerAtMillis, pendingIntent);
-
+    jmethodID startActivityMethod = env->GetMethodID(contextClass, "startActivity", "(Landroid/content/Intent;)V");
+    env->CallVoidMethod(context, startActivityMethod, intent);
     kill(getpid(), SIGKILL);
 }
 

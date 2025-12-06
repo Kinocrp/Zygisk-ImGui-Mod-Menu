@@ -517,7 +517,7 @@ void il2cpp_prepare(const char *outDir) {
     // il2cpp_save(path, domain, "Project_d.dll", "Assets.Scripts.GameSystem", "CRoleInfoManager", "IsPrivaceOn", Method, 1, nullptr, "COM_USER_PRIVACY_MASK");
 
     // create empty file to prevent error
-    std::ofstream out(path); 
+    std::ofstream out(path);
     out.close();
 }
 
