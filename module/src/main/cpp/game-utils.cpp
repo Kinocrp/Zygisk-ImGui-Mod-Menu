@@ -1,19 +1,12 @@
 #include "game-utils.h"
 #include <unistd.h>
 #include <signal.h>
-#include <android/native_window.h>
 #include "log.h"
 
 static void PerformRestart(JNIEnv *env) {
-
     jclass activityThreadClass = env->FindClass("android/app/ActivityThread");
-    if (env->ExceptionCheck()) { env->ExceptionClear(); LOGE("Failed to find ActivityThread"); return; }
-
     jmethodID currentApplicationMethod = env->GetStaticMethodID(activityThreadClass, "currentApplication", "()Landroid/app/Application;");
-    if (env->ExceptionCheck()) { env->ExceptionClear(); LOGE("Failed to find currentApplication"); return; }
-
     jobject context = env->CallStaticObjectMethod(activityThreadClass, currentApplicationMethod);
-    if (env->ExceptionCheck() || context == nullptr) { env->ExceptionClear(); LOGE("Failed to get Context"); return; }
 
     jclass contextClass = env->GetObjectClass(context);
     jmethodID getPackageManagerMethod = env->GetMethodID(contextClass, "getPackageManager", "()Landroid/content/pm/PackageManager;");
@@ -23,14 +16,8 @@ static void PerformRestart(JNIEnv *env) {
     jstring packageName = (jstring)env->CallObjectMethod(context, getPackageNameMethod);
 
     jclass packageManagerClass = env->GetObjectClass(packageManager);
-
     jmethodID getLaunchIntentMethod = env->GetMethodID(packageManagerClass, "getLaunchIntentForPackage", "(Ljava/lang/String;)Landroid/content/Intent;");
     jobject intent = env->CallObjectMethod(packageManager, getLaunchIntentMethod, packageName);
-
-    if (intent == nullptr) {
-        LOGE("Could not get launch intent");
-        return;
-    }
 
     jclass intentClass = env->GetObjectClass(intent);
     jmethodID addFlagsMethod = env->GetMethodID(intentClass, "addFlags", "(I)Landroid/content/Intent;");
