@@ -1,4 +1,4 @@
 #pragma once
 
 #define GamePackageName "com.game.packagename"
-// #define GamePackageName "com.garena.game.kgtw"  tested on arena of valor
+// #define GamePackageName "com.garena.game.kgtw"

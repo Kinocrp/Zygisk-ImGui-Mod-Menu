@@ -515,6 +515,10 @@ void il2cpp_prepare(const char *outDir) {
     auto domain = il2cpp_domain_get();
 
     // il2cpp_save(path, domain, "Project_d.dll", "Assets.Scripts.GameSystem", "CRoleInfoManager", "IsPrivaceOn", Method, 1, nullptr, "COM_USER_PRIVACY_MASK");
+
+    // create empty file to prevent error
+    std::ofstream out(path); 
+    out.close();
 }
 
 /*
