@@ -1,0 +1,9 @@
+ext {
+    moduleLibraryName = "unity-mod-menu"
+    magiskModuleId = "zygisk_unity_mod_menu"
+    moduleName = "Zygisk Unity Mod Menu"
+    moduleAuthor = "Kinocrp"
+    moduleDescription = "Zygisk Unity Mod Menu With Dobby And ImGui!"
+    moduleVersion = "v1.0.0"
+    moduleVersionCode = 1
+}
