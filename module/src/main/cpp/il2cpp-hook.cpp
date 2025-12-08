@@ -419,6 +419,45 @@ void il2cpp_dump(const char *outDir) {
     LOGI("dump done!");
 }
 
+Il2CppImage *get_image(Il2CppDomain *domain, const char *dllName) {
+    size_t assemblyCount = 0;
+    const Il2CppAssembly **assemblies = il2cpp_domain_get_assemblies(domain, &assemblyCount);
+    for (size_t i = 0; i < assemblyCount; ++i) {
+        const Il2CppImage *cimage = il2cpp_assembly_get_image(assemblies[i]);
+        const char *name = il2cpp_image_get_name(cimage);
+        if (name && strcmp(name, dllName) == 0) return const_cast<Il2CppImage*>(cimage);
+    }
+    return nullptr;
+}
+
+const MethodInfo *get_method(Il2CppClass *klass, const char *name, int paramIndex = -1, const char *paramName = nullptr, const char *paramType = nullptr) {
+    void *iter = nullptr;
+    const MethodInfo *method = nullptr;
+    while ((method = il2cpp_class_get_methods(klass, &iter))) {
+        const char *currentName = il2cpp_method_get_name(method);
+        if (!currentName || strcmp(currentName, name) != 0) continue;
+        if (paramIndex == -1) return method;
+        int paramCount = il2cpp_method_get_param_count(method);
+        if (paramIndex == paramCount) {
+            if (!paramName && !paramType) return method;
+        } else if (paramIndex < paramCount) {
+            bool isMatch = true;
+            if (paramName) {
+                const char *argName = il2cpp_method_get_param_name(method, paramIndex);
+                if (!argName || strcmp(argName, paramName) != 0) isMatch = false;
+            }
+            if (paramType && isMatch) {
+                const Il2CppType *argType = il2cpp_method_get_param(method, paramIndex);
+                Il2CppClass *argClass = il2cpp_class_from_type(argType);
+                const char *argTypeName = argClass ? il2cpp_class_get_name(argClass) : nullptr;
+                if (!argTypeName || strcmp(argTypeName, paramType) != 0) isMatch = false;
+            }
+            if (isMatch) return method;
+        }
+    }
+    return nullptr;
+}
+
 void il2cpp_hook() {
     LOGI("hooking...");
     LOGI("hook done!");
