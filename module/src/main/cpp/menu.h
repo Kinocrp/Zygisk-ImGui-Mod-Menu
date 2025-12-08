@@ -95,25 +95,27 @@ void DrawMenu(ImVec2 mousePos) {
     static bool showMenu = true;
 
     if (input.released) {
-        ImVec2 rectMin = ImVec2(menu.width / 2 - 125, menu.height - 50);
-        ImVec2 rectMax = ImVec2(menu.width / 2 + 125, menu.height + 50);
+        ImVec2 rectMin = ImVec2(menu.width / 2 - (63 * scale), menu.height - (17 * scale));
+        ImVec2 rectMax = ImVec2(menu.width / 2 + (63 * scale), menu.height + (17 * scale));
         if (mousePos.x >= rectMin.x && mousePos.x <= rectMax.x && mousePos.y >= rectMin.y && mousePos.y <= rectMax.y) showMenu = !showMenu;
         input.released = false;
     }
 
     if (showMenu) {
         ImGui::SetNextWindowSizeConstraints(ImVec2(300 * scale, 300 * scale), ImVec2(300 * scale, 300 * scale));
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowTitleAlign, ImVec2(0.5f, 0.5f));
         ImGui::Begin("Modded By Kinocrp", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse);
+        ImGui::PopStyleVar();
 
         ImGui::Checkbox("ESP", &menu.IsESP);
 
         ImGui::End();
     }
 
-    ImDraw::DrawLine(ImVec2(menu.width / 2 - 100, menu.height), ImVec2(menu.width / 2 + 100, menu.height), ImVec4(0, 0, 0, 1.0f), 50);
-    ImDraw::DrawCircle(menu.width / 2 - 100, menu.height, 25, true, ImVec4(0, 0, 0, 1.0f));
-    ImDraw::DrawCircle(menu.width / 2 + 100, menu.height, 25, true, ImVec4(0, 0, 0, 1.0f));
-    ImDraw::DrawText(ImVec2(menu.width / 2, menu.height - 12), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "Powered By Zygisk", regular, 20.0f);
+    ImDraw::DrawLine(ImVec2(menu.width / 2 - (50 * scale), menu.height), ImVec2(menu.width / 2 + (50 * scale), menu.height), ImVec4(0, 0, 0, 1.0f), 26 * scale);
+    ImDraw::DrawCircle(menu.width / 2 - (50 * scale), menu.height, 13 * scale, true, ImVec4(0, 0, 0, 1.0f));
+    ImDraw::DrawCircle(menu.width / 2 + (50 * scale), menu.height, 13 * scale, true, ImVec4(0, 0, 0, 1.0f));
+    ImDraw::DrawText(ImVec2(menu.width / 2, menu.height - (6 * scale)), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "Powered By Zygisk", regular, 10.0f * scale);
 }
 
 EGLBoolean (*orig_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
@@ -122,7 +124,12 @@ EGLBoolean proxy_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     eglQuerySurface(dpy, surface, EGL_HEIGHT, &menu.height);
 
     float min_dim = std::min(menu.width, menu.height);
-    float scale = min_dim / 450.0f;
+    if (min_dim < 1) min_dim = 1;
+
+    // Target 70% of the screen's minimum dimension
+    float menuSize = min_dim * 0.70f;
+    scale = menuSize / 300.0f; // Scale base design (300u) to match target size
+
     float scale_x = (menu.screen_width > 0) ? ((float)menu.width / menu.screen_width) : 1.0f;
     float scale_y = (menu.screen_height > 0) ? ((float)menu.height / menu.screen_height) : 1.0f;
 
@@ -148,6 +155,13 @@ EGLBoolean proxy_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
     style.WindowMinSize = { 300 * scale, 300 * scale };
     style.ScrollbarSize = 16 * scale;
     style.GrabMinSize   = 16 * scale;
+
+    style.WindowRounding = 20.0f * scale;
+    style.FrameRounding = 5.0f * scale;
+    style.ScrollbarRounding = 5.0f * scale;
+    style.GrabRounding = 2.3f * scale;
+    style.TabRounding = 2.3f * scale;
+    style.ChildRounding = 5.0f * scale;
 
     ImGui_ImplOpenGL3_NewFrame();
 
