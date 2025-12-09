@@ -113,8 +113,8 @@ void DrawMenu(ImVec2 mousePos) {
     }
 
     ImDraw::DrawLine(ImVec2(menu.width / 2 - (50 * scale), menu.height), ImVec2(menu.width / 2 + (50 * scale), menu.height), ImVec4(0, 0, 0, 1.0f), 26 * scale);
-    ImDraw::DrawCircle(menu.width / 2 - (50 * scale), menu.height, 13 * scale, true, ImVec4(0, 0, 0, 1.0f));
-    ImDraw::DrawCircle(menu.width / 2 + (50 * scale), menu.height, 13 * scale, true, ImVec4(0, 0, 0, 1.0f));
+    ImDraw::DrawCircle(menu.width / 2 - (50 * scale), menu.height, 13 * scale, true, ImVec4(0, 0, 0, 1.0f), 62 * scale);
+    ImDraw::DrawCircle(menu.width / 2 + (50 * scale), menu.height, 13 * scale, true, ImVec4(0, 0, 0, 1.0f), 62 * scale);
     ImDraw::DrawText(ImVec2(menu.width / 2, menu.height - (6 * scale)), ImVec4(1.0f, 1.0f, 1.0f, 1.0f), "Powered By Zygisk", regular, 10.0f * scale);
 }
 
