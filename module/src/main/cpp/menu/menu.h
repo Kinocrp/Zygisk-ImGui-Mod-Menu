@@ -238,7 +238,7 @@ void menu_draw(ImGuiIO &io, ImGuiStyle &style) {
 }
 
 // OpenGL
-EGLBoolean (*o_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
+EGLBoolean (*o_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface) = nullptr;
 EGLBoolean h_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
 
     if (!menu_inited) {
