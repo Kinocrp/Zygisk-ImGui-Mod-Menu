@@ -1,17 +1,21 @@
 #pragma once
 
+#include <vector>
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_android.h>
 #include "imgui.h"
-#include "imgui_impl_opengl3.h"
 #include "imgui_impl_android.h"
+#include "imgui_impl_opengl3.h"
+#include "imgui_impl_vulkan.h"
 #include "il2cpp-resolver.h"
 
 #include "menu-config.h"
 #include "menu-input.h"
 #include "menu-draw.h"
 
-#include "font.h"
+// #include "font.h"
 
 static bool menu_inited = false;
 static bool menu_show = false;
@@ -77,6 +81,7 @@ void menu_init(Il2CppDomain *domain) {
     style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.74f, 0.58f, 0.98f, 0.29f);
     style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.84f, 0.58f, 1.0f, 0.29f);
 
+    /*
     ImGuiIO &io = ImGui::GetIO();
     io.Fonts->Clear();
 
@@ -94,6 +99,7 @@ void menu_init(Il2CppDomain *domain) {
             &cfg_base,
             io.Fonts->GetGlyphRangesChineseFull()
     );
+    */
 }
 
 void menu_resize(ImGuiIO &io, ImGuiStyle &style) {
@@ -233,7 +239,10 @@ void menu_draw(ImGuiIO &io, ImGuiStyle &style) {
     }
 }
 
-void menu_render() {
+// OpenGL
+EGLBoolean (*o_eglSwapBuffers)(EGLDisplay dpy, EGLSurface surface);
+EGLBoolean h_eglSwapBuffers(EGLDisplay dpy, EGLSurface surface) {
+
     if (!menu_inited) {
         auto domain = il2cpp_domain_get();
         il2cpp_thread_attach(domain);
@@ -249,7 +258,7 @@ void menu_render() {
 
     menu_resize(io, style);
     menu_input(io, screenHeight);
-    
+
     ImGui_ImplOpenGL3_NewFrame();
     ImGui::NewFrame();
 
@@ -268,4 +277,6 @@ void menu_render() {
 
     glViewport(last_viewport[0], last_viewport[1], last_viewport[2], last_viewport[3]);
     glScissor(last_scissor_box[0], last_scissor_box[1], last_scissor_box[2], last_scissor_box[3]);
+
+    return o_eglSwapBuffers(dpy, surface);
 }

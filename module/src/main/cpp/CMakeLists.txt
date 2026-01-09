@@ -51,7 +51,8 @@ add_library(${MODULE_NAME} SHARED
         ${menu-src}
         ${il2cpp-src})
 
-find_library(egl EGL)
+find_library(EGL_LIB EGL)
+find_library(VULKAN_LIB vulkan)
 find_library(android android)
 find_library(LZ_LIB z)
 
@@ -67,7 +68,7 @@ endif ()
 
 add_subdirectory(dobby)
 
-target_link_libraries(${MODULE_NAME} log dobby_static ${android} ${OPENGL_LIB} ${egl} ${LZ_LIB})
+target_link_libraries(${MODULE_NAME} log dobby_static ${android} ${OPENGL_LIB} ${EGL_LIB} ${VULKAN_LIB} ${LZ_LIB})
 
 if (NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_command(TARGET ${MODULE_NAME} POST_BUILD

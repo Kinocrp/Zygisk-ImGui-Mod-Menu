@@ -1,3 +1,3 @@
 #pragma once
 
-#define GamePackageName "com.garena.game.kgtw"
+#define GamePackageName "com.game.packagename"
