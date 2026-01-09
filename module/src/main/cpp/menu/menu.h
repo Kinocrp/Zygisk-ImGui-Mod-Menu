@@ -15,7 +15,7 @@
 #include "menu-input.h"
 #include "menu-draw.h"
 
-// #include "font.h"
+#include "font.h"
 
 static bool menu_inited = false;
 static bool menu_show = false;
@@ -81,7 +81,6 @@ void menu_init(Il2CppDomain *domain) {
     style.Colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.74f, 0.58f, 0.98f, 0.29f);
     style.Colors[ImGuiCol_ResizeGripActive] = ImVec4(0.84f, 0.58f, 1.0f, 0.29f);
 
-    /*
     ImGuiIO &io = ImGui::GetIO();
     io.Fonts->Clear();
 
@@ -99,7 +98,6 @@ void menu_init(Il2CppDomain *domain) {
             &cfg_base,
             io.Fonts->GetGlyphRangesChineseFull()
     );
-    */
 }
 
 void menu_resize(ImGuiIO &io, ImGuiStyle &style) {
