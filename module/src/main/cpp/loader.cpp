@@ -83,8 +83,8 @@ static std::string GetNativeBridgeLibrary() {
 bool NativeBridgeLoad(const char *game_data_dir, int api_level, void *data, size_t length) {
     sleep(5);
 
-    auto libart = xdl_open("libart.so", XDL_TRY_FORCE_LOAD);
-    auto JNI_GetCreatedJavaVMs = (jint(*)(JavaVM**, jsize, jsize*))xdl_sym(libart, "JNI_GetCreatedJavaVMs", nullptr);
+    auto libart = dlopen("libart.so", RTLD_NOW);
+    auto JNI_GetCreatedJavaVMs = (jint(*)(JavaVM**, jsize, jsize*))dlsym(libart, "JNI_GetCreatedJavaVMs");
     LOGI("JNI_GetCreatedJavaVMs %p", JNI_GetCreatedJavaVMs);
     JavaVM *vms_buf[1];
     JavaVM *vm;
@@ -108,15 +108,15 @@ bool NativeBridgeLoad(const char *game_data_dir, int api_level, void *data, size
         return false;
     }
 
-    auto nb = xdl_open("libhoudini.so", XDL_TRY_FORCE_LOAD);
+    auto nb = dlopen("libhoudini.so", RTLD_NOW);
     if (!nb) {
         auto native_bridge = GetNativeBridgeLibrary();
         LOGI("native bridge: %s", native_bridge.data());
-        nb = xdl_open(native_bridge.data(), XDL_TRY_FORCE_LOAD);
+        nb = dlopen(native_bridge.data(), RTLD_NOW);
     }
     if (nb) {
         LOGI("nb %p", nb);
-        auto callbacks = (NativeBridgeCallbacks*)xdl_sym(nb, "NativeBridgeItf", nullptr);
+        auto callbacks = (NativeBridgeCallbacks*)dlsym(nb, "NativeBridgeItf");
         if (callbacks) {
             LOGI("NativeBridgeLoadLibrary %p", callbacks->loadLibrary);
             LOGI("NativeBridgeLoadLibraryExt %p", callbacks->loadLibraryExt);
@@ -162,7 +162,7 @@ void hack_start(const char *game_data_dir) {
         }
         usleep(100000);
     }
-    auto libEGL = xdl_open("libEGL.so", XDL_TRY_FORCE_LOAD);
+    auto libEGL = xdl_open("libEGL.so", 0);
     auto eglSwapBuffers = xdl_sym(libEGL, "eglSwapBuffers", nullptr);
     DobbyHook(eglSwapBuffers, (void*)h_eglSwapBuffers, (void**)&o_eglSwapBuffers);
 }
