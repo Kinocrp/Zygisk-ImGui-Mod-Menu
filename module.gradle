@@ -1,0 +1,9 @@
+ext {
+    moduleLibraryName = "zygisk-il2cpp-modmenu"
+    magiskModuleId = "zygisk-il2cpp-modmenu"
+    moduleName = "Il2Cpp Mod Menu"
+    moduleAuthor = "Kinocrp"
+    moduleDescription = "Il2Cpp Mod Menu With Zygisk."
+    moduleVersion = "v1.0.0"
+    moduleVersionCode = 1
+}
